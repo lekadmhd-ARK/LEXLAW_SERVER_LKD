@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/ai/validity', [ValidityCheckerController::class, 'check'])->name('ai.validity');
     Route::post('/ai/analyze', [AdvancedAiController::class, 'analyze'])->name('ai.analyze');
     Route::match(['get', 'post'], '/ai/contract-review', [AdvancedAiController::class, 'contractReview'])->name('ai.contract-review')->middleware('throttle:5,1');
+    Route::post("ai/contract-review/download", [AdvancedAiController::class, "downloadResult"])->name("ai.contract-review.download");
     Route::post('/ai/precedent-matching', [AdvancedAiController::class, 'precedentMatching'])->name('ai.precedent-matching');
     Route::post('/pdf/upload', [PdfController::class, 'upload'])->name('pdf.upload');
     Route::post('/pdf/parse-text', [PdfController::class, 'parseText'])->name('pdf.parse-text');

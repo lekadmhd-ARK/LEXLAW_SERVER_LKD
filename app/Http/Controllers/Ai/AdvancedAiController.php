@@ -140,4 +140,98 @@ class AdvancedAiController extends Controller
             ], 500);
         }
     }
+
+    public function downloadResult(Request $request)
+    {
+        $request->validate([
+            'uid' => 'required|string',
+            'type' => 'required|in:pdf,docx',
+            'content' => 'required|string',
+            'generated_at' => 'nullable|string',
+        ]);
+
+        $uid = $request->input('uid');
+        $type = $request->input('type');
+        $content = $request->input('content');
+        $generatedAt = $request->input('generated_at', now()->setTimezone('Asia/Jakarta')->locale('id_ID')->isoFormat('D MMMM YYYY, HH:mm') . ' WIB');
+        $filename = 'lexlaw-contract-analysis-' . $uid;
+
+        if ($type === 'pdf') {
+            return $this->generatePdf($content, $uid, $generatedAt, $filename);
+        }
+
+        return $this->generateDocx($content, $uid, $generatedAt, $filename);
+    }
+
+    private function generatePdf($content, $uid, $generatedAt, $filename)
+    {
+        $html = $this->buildHtml($content, $uid, $generatedAt);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHtml($html);
+        $pdf->setPaper('a4');
+        return $pdf->stream($filename . '.pdf', ['Attachment' => true]);
+    }
+
+    private function generateDocx($content, $uid, $generatedAt, $filename)
+    {
+        $section = new \PhpOffice\PhpWord\Section();
+        $section->addTitle('Laporan Analisis Kontrak', 20);
+        $section->addParagraph('UID: ' . $uid);
+        $section->addParagraph('Tanggal: ' . $generatedAt);
+        $section->addParagraph('');
+
+        foreach (explode("\n", $content) as $line) {
+            if (empty(trim($line))) {
+                $section->addParagraph('');
+            } elseif (substr($line, 0, 2) === '##') {
+                $section->addTitle(substr($line, 3), 16);
+            } elseif (substr($line, 0, 1) === '#') {
+                $section->addTitle(substr($line, 2), 18);
+            } else {
+                $section->addParagraph($line);
+            }
+        }
+
+        $section->addParagraph('');
+        $section->addParagraph('Disclaimer: Analisis ini dihasilkan AI untuk referensi awal dan bukan nasihat hukum resmi.');
+        $section->addParagraph('UID: ' . $uid);
+
+        $writer = \PhpOffice\PhpWord\IOFactory::createWriter(new \PhpOffice\PhpWord\PhpWord(), 'Word2007');
+        $objPhpWord = $writer->getPhpWord();
+        $objPhpWord->addSection()->merge();
+        $objPhpWord->sections = [$section];
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'lawlex_');
+        $writer->save($tempFile);
+
+        $content2 = file_get_contents($tempFile);
+        @unlink($tempFile);
+
+        return response($content2)
+            ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            ->header('Content-Disposition', 'attachment; filename= . \$filename . .docx');
+    }
+
+    private function buildHtml($content, $uid, $generatedAt)
+    {
+        $mdHtml = nl2br(e($content));
+        return '<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<style>
+body{font-family:DejaVu Sans,Arial,sans-serif;font-size:10pt;line-height:1.6;padding:20mm;color:#1a1a1a;}
+h1{font-size:16pt;color:#2563eb;border-bottom:2px solid #2563eb;padding-bottom:8px;margin:0 0 16px 0;}
+.meta{font-size:9pt;color:#666;margin-bottom:24px;}
+.content{white-space:pre-wrap;text-align:justify;}
+.footer{margin-top:40px;padding-top:12px;border-top:1px solid #ccc;font-size:8pt;color:#999;}
+</style>
+</head>
+<body>
+<h1>Laporan Analisis Kontrak</h1>
+<div class="meta">UID: ' . $uid . ' | Tanggal: ' . $generatedAt . '</div>
+<div class="content">' . $mdHtml . '</div>
+<div class="footer">Disclaimer: Analisis ini dihasilkan AI untuk referensi awal dan bukan nasihat hukum resmi. Konsultasikan dengan pengacara berkualifikasi untuk keputusan hukum yang mengikat. UID: ' . $uid . '<br>© 2026 LEXLAW v2 - AI Legal Analysis</div>
+</body>
+</html>';
+    }
 }
