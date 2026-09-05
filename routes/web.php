@@ -56,7 +56,7 @@ Route::middleware('auth')->group(function () {
     // Core CRUD
     Route::resource('regulations', RegulationController::class);
     Route::get('regulations/{regulation}/pdf', [RegulationController::class, 'downloadPdf'])->name('regulations.pdf');
-    Route::post('regulations/fetch-jdih', [RegulationController::class, 'fetchFromJdihUrl'])->name('regulations.fetch-jdih')->middleware('throttle:5,1');
+    Route::post('regulations/fetch-jdih', [RegulationController::class, 'fetchFromJdihUrl'])->name('regulations.fetch-jdih')->middleware('throttle:30,1');
     Route::resource('regulation-contents', RegulationContentController::class)->only(['index', 'store', 'update']);
     Route::resource('legal-glossary', LegalGlossaryController::class);
     Route::resource('consolidations', ConsolidationController::class)->only(['index', 'store', 'update']);
@@ -75,7 +75,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/ai/validity', [ValidityCheckerController::class, 'form'])->name('ai.validity.form');
     Route::post('/ai/validity', [ValidityCheckerController::class, 'check'])->name('ai.validity');
     Route::post('/ai/analyze', [AdvancedAiController::class, 'analyze'])->name('ai.analyze');
-    Route::match(['get', 'post'], '/ai/contract-review', [AdvancedAiController::class, 'contractReview'])->name('ai.contract-review')->middleware('throttle:5,1');
+    Route::match(['get', 'post'], '/ai/contract-review', [AdvancedAiController::class, 'contractReview'])->name('ai.contract-review')->middleware('throttle:30,1');
     Route::post("ai/contract-review/download", [AdvancedAiController::class, "downloadResult"])->name("ai.contract-review.download");
     Route::post('/ai/precedent-matching', [AdvancedAiController::class, 'precedentMatching'])->name('ai.precedent-matching');
     Route::post('/pdf/upload', [PdfController::class, 'upload'])->name('pdf.upload');
