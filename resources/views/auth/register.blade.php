@@ -38,6 +38,13 @@
                 <input type="password" name="password_confirmation" placeholder="Ulangi password" required>
             </div>
         </div>
+        <div class="field">
+            <label>Nama Perusahaan</label>
+            <div class="input-wrap">
+                <span class="ico">🏢</span>
+                <input type="text" name="company_name" placeholder="Contoh: Leksana & Rekan" value="{{ old('company_name') }}" required>
+            </div>
+        </div>
         <button type="submit" class="btn btn-primary">Buat Akun Gratis →</button>
     </form>
 
