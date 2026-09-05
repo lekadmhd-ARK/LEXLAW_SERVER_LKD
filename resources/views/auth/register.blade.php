@@ -1,6 +1,8 @@
-<x-layouts.auth title="Daftar - LEXLAW v2">
-    <h1>Daftar Akun</h1>
-    <p>Buat akun tenant perusahaan Anda di LEXLAW v2.</p>
+<x-layouts.auth title="Daftar — LEXLAW v2">
+    <div class="card-head">
+        <h2>Buat Akun Gratis</h2>
+        <p>Daftar sekarang dan mulai gunakan AI hukum Indonesia.</p>
+    </div>
 
     @if($errors->any())
         <div class="alert">{{ $errors->first() }}</div>
@@ -8,24 +10,38 @@
 
     <form method="POST" action="/register" class="form">
         @csrf
-        <div>
-            <label>Nama</label>
-            <input type="text" name="name" value="{{ old('name') }}" required>
+        <div class="field">
+            <label>Nama Lengkap</label>
+            <div class="input-wrap">
+                <span class="ico">👤</span>
+                <input type="text" name="name" placeholder="Nama Anda" value="{{ old('name') }}" required autofocus>
+            </div>
         </div>
-        <div>
+        <div class="field">
             <label>Email</label>
-            <input type="email" name="email" value="{{ old('email') }}" required>
+            <div class="input-wrap">
+                <span class="ico">✉</span>
+                <input type="email" name="email" placeholder="anda@perusahaan.com" value="{{ old('email') }}" required>
+            </div>
         </div>
-        <div>
+        <div class="field">
             <label>Password</label>
-            <input type="password" name="password" required>
+            <div class="input-wrap">
+                <span class="ico">🔒</span>
+                <input type="password" name="password" placeholder="Min. 8 karakter" required>
+            </div>
         </div>
-        <div>
+        <div class="field">
             <label>Konfirmasi Password</label>
-            <input type="password" name="password_confirmation" required>
+            <div class="input-wrap">
+                <span class="ico">🔒</span>
+                <input type="password" name="password_confirmation" placeholder="Ulangi password" required>
+            </div>
         </div>
-        <button type="submit">Daftar Sekarang</button>
+        <button type="submit" class="btn btn-primary">Buat Akun Gratis →</button>
     </form>
 
-    <div class="foot">Sudah punya akun? <a href="{{ route('login') }}">Login</a></div>
+    <div class="alt">
+        Sudah punya akun? <a href="{{ route('login') }}">Masuk</a>
+    </div>
 </x-layouts.auth>
