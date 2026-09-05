@@ -518,8 +518,8 @@
             <p>Pelanggan baru berhak mengajukan refund dalam <strong>7 hari kalender</strong> sejak transaksi pertama dengan ketentuan:</p>
             <ul>
                 <li><strong>Refund 100% penuh</strong> berlaku jika pemakaian AI ≤ 5 kali total.</li>
-                <li>Jika pemakaian AI > 5 kali, refund dihitung <strong>prorata</strong> dikurangi biaya pemrosesan komputasi AI yang telah terpakai.</li>
-            </ul>
+                <li><strong>Refund 100% penuh</strong> hanya berlaku apabila total konsumsi AI (Lex Q&A, Draft DOCX, Validity Checker, Contract Reviewer) <strong>tidak melebihi 5 (lima) kali pemakaian</strong</li>
+                                   </ul>
             <h4>2. Ketentuan Pengajuan & Batas Klaim</h4>
             <p>Pengajuan dikirim via email ke <strong>support@lexlaw.arktech.id</strong> atau WhatsApp <strong>0812-9741-4115</strong> + bukti bayar. <strong>Maksimal 1 kali refund per akun/perusahaan</strong> (mencegah abuse loop).</p>
             <h4>3. Pengecualian (Non-Refundable)</h4>

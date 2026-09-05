@@ -18,9 +18,8 @@
                     <p style="font-weight:700;font-size:15px;color:var(--accent);margin-bottom:8px">1. Jaminan 7 Hari Bersyarat (7-Day Limited Guarantee)</p>
                     <ul style="margin-left:20px;margin-bottom:16px;line-height:1.8">
                         <li>Setiap pelanggan baru paket berlangganan berhak mengajukan permohonan pengembalian dana dalam kurun waktu <strong>7 (tujuh) hari kalender</strong> sejak tanggal transaksi pertama.</li>
-                        <li><strong>Refund 100% penuh</strong> hanya berlaku apabila total konsumsi AI (Lex Q&A, Draft DOCX, Validity Checker, Contract Reviewer) <strong>tidak melebihi 5 (lima) kali pemakaian</strong>.</li>
-                        <li>Apabila pemakaian AI <strong>lebih dari 5 kali</strong>, nilai refund akan dihitung secara <strong>prorata</strong> berdasarkan sisa kuota, dikurangi biaya pemrosesan komputasi AI yang telah terpakai.</li>
-                    </ul>
+                        <li><strong>Refund 100% penuh</strong> hanya berlaku apabila total konsumsi AI (Lex Q&A, Draft DOCX, Validity Checker, Contract Reviewer) <strong>tidak melebihi 5 (lima) kali pemakaian</strong</li>
+                   </ul>
 
                     <p style="font-weight:700;font-size:15px;color:var(--accent);margin-bottom:8px">2. Ketentuan Pengajuan Refund</p>
                     <ul style="margin-left:20px;margin-bottom:16px;line-height:1.8">
