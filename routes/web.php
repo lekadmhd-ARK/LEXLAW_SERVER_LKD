@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
     // Password change
     Route::get('/disclaimer', fn() => view('disclaimer'))->name('disclaimer');
     Route::get('/terms-of-service', fn() => view('tos'))->name('tos');
+    Route::get('/refund-policy', fn() => view('refund'))->name('refund-policy');
     Route::get('/password-change', [PasswordController::class, 'showForm'])->name('password.change');
     Route::post('/password-change', [PasswordController::class, 'updatePassword'])->name('password.update');
 });

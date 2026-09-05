@@ -181,6 +181,72 @@
             {{ $slot }}
             @yield('content')
         </main>
+
+        {{-- ===== SaaS FOOTER ===== --}}
+        <footer class="saas-footer">
+            <div class="saas-footer-inner">
+                <div class="saas-footer-grid">
+                    {{-- Brand --}}
+                    <div class="saas-footer-brand">
+                        <div class="saas-footer-logo">⚖️ LEXLAW v2</div>
+                        <p class="saas-footer-tagline">Legal Intelligence & SaaS Platform — AI-powered hukum Indonesia.</p>
+                    </div>
+                    {{-- FAQ --}}
+                    <div class="saas-footer-col">
+                        <h4 class="saas-footer-title">❓ FAQ</h4>
+                        <div class="saas-faq-item">
+                            <button class="saas-faq-q" onclick="this.nextElementSibling.classList.toggle('open');this.classList.toggle('open')">
+                                <span>Apa itu LEXLAW?</span><span class="saas-faq-arrow">▾</span>
+                            </button>
+                            <div class="saas-faq-a"><p>LEXLAW adalah platform SaaS berbasis AI yang membantu Anda menganalisis kontrak, mencari regulasi, membuat draft dokumen hukum, dan memeriksa validitas sitasi hukum — semuanya dalam satu dashboard.</p></div>
+                        </div>
+                        <div class="saas-faq-item">
+                            <button class="saas-faq-q" onclick="this.nextElementSibling.classList.toggle('open');this.classList.toggle('open')">
+                                <span>Apakah data saya aman?</span><span class="saas-faq-arrow">▾</span>
+                            </button>
+                            <div class="saas-faq-a"><p>Ya. Data kontrak Anda tidak disimpan di server kami — hanya diproses sekali saat analisis. Semua data dienkripsi dan sesuai Kebijakan Privasi kami.</p></div>
+                        </div>
+                        <div class="saas-faq-item">
+                            <button class="saas-faq-q" onclick="this.nextElementSibling.classList.toggle('open');this.classList.toggle('open')">
+                                <span>Berapa lama waktu analisis?</span><span class="saas-faq-arrow">▾</span>
+                            </button>
+                            <div class="saas-faq-a"><p>Analisis kontrak membutuhkan waktu 10–30 detik tergantung panjang teks. Draft dokumen sekitar 15–45 detik.</p></div>
+                        </div>
+                        <div class="saas-faq-item">
+                            <button class="saas-faq-q" onclick="this.nextElementSibling.classList.toggle('open');this.classList.toggle('open')">
+                                <span>Format file apa yang didukung?</span><span class="saas-faq-arrow">▾</span>
+                            </button>
+                            <div class="saas-faq-a"><p>Contract Reviewer mendukung PDF, DOCX, dan TXT (maks 10MB). Output bisa diunduh sebagai PDF atau Word.</p></div>
+                        </div>
+                        <div class="saas-faq-item">
+                            <button class="saas-faq-q" onclick="this.nextElementSibling.classList.toggle('open');this.classList.toggle('open')">
+                                <span>Apakah AI menggantikan pengacara?</span><span class="saas-faq-arrow">▾</span>
+                            </button>
+                            <div class="saas-faq-a"><p>Tidak. LEXLAW adalah alat bantu referensi — bukan nasihat hukum profesional. Selalu verifikasi dengan pengacara berlisensi.</p></div>
+                        </div>
+                    </div>
+                    {{-- Links --}}
+                    <div class="saas-footer-col">
+                        <h4 class="saas-footer-title">🔗 Tautan</h4>
+                        <a href="/disclaimer" class="saas-footer-link">🛡️ Disclaimer & Penafian</a>
+                        <a href="/terms-of-service" class="saas-footer-link">📜 Syarat & Ketentuan</a>
+                        <a href="/refund-policy" class="saas-footer-link">💰 Kebijakan Refund</a>
+                        <a href="/dashboard" class="saas-footer-link">📊 Dashboard</a>
+                    </div>
+                    {{-- Refund Policy --}}
+                    <div class="saas-footer-col">
+                        <h4 class="saas-footer-title">💰 Kebijakan Refund</h4>
+                        <p class="saas-footer-text">LEXLAW memberikan jaminan kepuasan 7 hari sejak pendaftaran. Jika layanan tidak sesuai ekspektasi, Anda berhak mengajukan refund penuh dalam periode tersebut.</p>
+                        <p class="saas-footer-text">Setelah 7 hari, refund tidak dapat diproses kecuali terdapat kendala teknis yang terbukti berasal dari pihak LEXLAW. Pengajuan refund dilakukan via email ke support@lexlaw.arktech.id.</p>
+                        <a href="/refund-policy" class="saas-footer-link" style="margin-top:8px">→ Lihat detail lengkap</a>
+                    </div>
+                </div>
+                <div class="saas-footer-bottom">
+                    <span>© 2026 LEXLAW v2 — Legal Intelligence & SaaS Platform. All rights reserved.</span>
+                    <span class="saas-footer-legal">Data regulasi bersumber dari dokumen resmi pemerintah Indonesia (public domain). Informasi bersifat referensi.</span>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script>
