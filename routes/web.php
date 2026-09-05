@@ -24,6 +24,9 @@ use App\Http\Controllers\PdfController;
 use App\Http\Controllers\Auth\PasswordController;
 
 Route::get('/', fn () => view('welcome'))->name('home');
+Route::get('/disclaimer', fn() => view('disclaimer'))->name('disclaimer');
+Route::get('/terms-of-service', fn() => view('tos'))->name('tos');
+Route::get('/refund-policy', fn() => view('refund'))->name('refund-policy');
 
 // Webhook (no auth)
 Route::post('/webhook/payment', [PaymentWebhookController::class, '__invoke'])->name('webhook.payment');
@@ -82,9 +85,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/pdf/parse-text', [PdfController::class, 'parseText'])->name('pdf.parse-text');
 
     // Password change
-    Route::get('/disclaimer', fn() => view('disclaimer'))->name('disclaimer');
-    Route::get('/terms-of-service', fn() => view('tos'))->name('tos');
-    Route::get('/refund-policy', fn() => view('refund'))->name('refund-policy');
     Route::get('/password-change', [PasswordController::class, 'showForm'])->name('password.change');
     Route::post('/password-change', [PasswordController::class, 'updatePassword'])->name('password.update');
 });

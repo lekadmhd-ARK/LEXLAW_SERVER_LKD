@@ -123,10 +123,24 @@
         .contact-row span{font-size:12px;color:var(--dim)}
         .wa-btn{display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#fff;padding:12px 20px;border-radius:10px;font-weight:600;font-size:13px;transition:all .18s}
         .wa-btn:hover{background:#128C7E;transform:translateY(-1px);box-shadow:0 6px 16px rgba(37,211,102,.3)}
+        /* MODAL POPUP */
+        .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);z-index:200;align-items:center;justify-content:center;padding:20px}
+        .modal-overlay.active{display:flex}
+        .modal-box{width:100%;max-width:720px;max-height:85vh;background:#0f1012;border:1px solid var(--line);border-radius:18px;display:flex;flex-direction:column;box-shadow:0 30px 90px rgba(0,0,0,.7);overflow:hidden}
+        .modal-head{padding:18px 24px;border-bottom:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.02)}
+        .modal-head h3{font-size:16px;font-weight:700;margin:0}
+        .modal-close{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);font-size:16px;cursor:pointer;display:grid;place-items:center}
+        .modal-close:hover{background:rgba(255,255,255,.1)}
+        .modal-body{padding:24px;overflow-y:auto;font-size:13.5px;color:var(--muted);line-height:1.75}
+        .modal-body h4{color:var(--text);font-size:14px;margin:18px 0 8px}
+        .modal-body h4:first-child{margin-top:0}
+        .modal-body p{margin-bottom:12px}
+        .modal-body ul{padding-left:18px;margin-bottom:12px}
+        .modal-body li{margin-bottom:6px}
         /* FOOTER */
         footer{border-top:1px solid var(--line2);padding:28px 24px;text-align:center;color:var(--dim);font-size:12px}
-        footer a{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
-        footer a:hover{color:var(--text)}
+        footer button.link-btn{background:none;border:none;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font:inherit;cursor:pointer;padding:0 4px}
+        footer button.link-btn:hover{color:var(--text)}
         /* REVEAL */
         .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
         .reveal.in{opacity:1;transform:none}
@@ -375,7 +389,7 @@
         <div class="section-head">
             <div class="eyebrow">⚖️ LEGALITAS</div>
             <h2>Aman Secara Hukum</h2>
-            <p>Transparan dari awal — baca ringkasannya di sini, detail lengkap di halaman resmi.</p>
+            <p>Transparan dari awal — klik tombol di bawah untuk baca dokumen lengkap via popup tanpa perlu login.</p>
         </div>
         <div class="legal-grid">
             <div class="legal-card">
@@ -386,7 +400,7 @@
                     <li><b>3.</b> Anda bertanggung jawab atas keamanan akun & dilarang pakai layanan untuk aktivitas ilegal.</li>
                     <li><b>4.</b> Output AI bersifat informatif, bukan legal opinion — wajib verifikasi mandiri.</li>
                 </ul>
-                <a href="/terms-of-service" class="btn" style="width:100%;margin-top:14px;justify-content:center">Baca Syarat Lengkap →</a>
+                <button onclick="openModal('terms')" class="btn" style="width:100%;margin-top:14px;justify-content:center">Baca S&K (Popup) →</button>
             </div>
             <div class="legal-card">
                 <h3>💰 Kebijakan Refund</h3>
@@ -396,13 +410,13 @@
                     <li><b>Pengecualian</b> — Lewat 7 hari, renewal, atau pelanggaran S&K tidak dapat refund.</li>
                     <li><b>Proses</b> — Dana kembali 3–14 hari kerja via metode bayar asal / transfer bank.</li>
                 </ul>
-                <a href="/refund-policy" class="btn" style="width:100%;margin-top:14px;justify-content:center">Lihat Detail Refund →</a>
+                <button onclick="openModal('refund')" class="btn" style="width:100%;margin-top:14px;justify-content:center">Baca Refund Policy (Popup) →</button>
             </div>
         </div>
         <div class="legal-card" style="margin-top:16px;text-align:center">
-            <h3 style="justify-content:center">🛡️ Disclaimer</h3>
+            <h3 style="justify-content:center">🛡️ Disclaimer & Penafian Hukum</h3>
             <p style="font-size:12.5px;color:var(--muted);line-height:1.7">Data regulasi bersumber dari dokumen resmi pemerintah Indonesia (public domain) — informasi bersifat referensi dan tidak menggantikan dokumen resmi / lembaran negara. LEXLAW tidak menciptakan hubungan advokat-klien. Penggunaan output AI sepenuhnya tanggung jawab pengguna.</p>
-            <a href="/disclaimer" class="btn" style="margin-top:12px">Baca Disclaimer Lengkap →</a>
+            <button onclick="openModal('disclaimer')" class="btn" style="margin-top:12px">Baca Disclaimer (Popup) →</button>
         </div>
     </section>
 
@@ -441,14 +455,98 @@
         </div>
     </section>
 
+    <!-- MODAL OVERLAYS (NO LOGIN REQUIRED) -->
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h3 id="modalTitle">Dokumen Legal</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content injected by JS -->
+            </div>
+        </div>
+    </div>
+
     <footer>
         <div style="max-width:1100px;margin:0 auto">
             <div>© 2026 LEXLAW v2 — Legal Intelligence & SaaS Platform. All rights reserved.</div>
-            <div style="margin-top:6px">Data regulasi public domain · <a href="/disclaimer">Disclaimer</a> · <a href="/terms-of-service">Syarat & Ketentuan</a> · <a href="/refund-policy">Refund Policy</a> · <a href="https://wa.me/6281297414115" target="_blank">Kontak WA</a></div>
+            <div style="margin-top:6px">Data regulasi public domain · 
+                <button class="link-btn" onclick="openModal('disclaimer')">Disclaimer</button> · 
+                <button class="link-btn" onclick="openModal('terms')">Syarat & Ketentuan</button> · 
+                <button class="link-btn" onclick="openModal('refund')">Refund Policy</button> · 
+                <a href="https://wa.me/6281297414115" target="_blank">Kontak WA</a>
+            </div>
         </div>
     </footer>
 
     <script>
+    var MODALS = {
+        disclaimer: {
+            title: '🛡️ Disclaimer & Penafian Hukum',
+            html: `<h4>PENTING — Baca Penafian Hukum ini dengan saksama sebelum menggunakan platform LexLaw.</h4>
+            <p>Selamat datang di <strong>LexLaw</strong> ("Platform"). Dengan mengakses atau menggunakan fitur AI dan layanan di platform ini, Anda dianggap telah membaca, memahami, dan menyetujui seluruh batasan serta pelepasan tanggung jawab di bawah ini.</p>
+            <h4>1. Sifat Layanan Bersifat Informatif, Bukan Nasihat Hukum Formal</h4>
+            <p>Seluruh output, draf dokumen, analisis, dan jawaban dari AI LEXLAW murni berfungsi sebagai <strong>alat bantu referensi, edukasi, dan penunjang produktivitas</strong>. Output AI <strong>tidak menggantikan pendapat hukum profesional</strong> (legal opinion) dari advokat atau konsultan hukum yang berlisensi.</p>
+            <h4>2. Tidak Ada Hubungan Hukum Klien-Advokat</h4>
+            <p>Penggunaan fitur AI di LEXLAW <strong>tidak menciptakan hubungan hukum formal</strong> antara advokat dan klien.</p>
+            <h4>3. Batasan Akurasi & Tanggung Jawab Verifikasi Pengguna</h4>
+            <p>Sistem AI dapat mengalami keterbatasan teknis, kekeliruan konteks, atau ketidaksesuaian dengan pembaruan regulasi terbaru. Pengguna <strong>wajib melakukan pemeriksaan mandiri</strong> (independent legal review) atau meminta validasi dari tenaga hukum profesional sebelum mengesahkan dokumen hukum apa pun.</p>
+            <h4>4. Pelepasan Tanggung Jawab Hukum</h4>
+            <p>Pihak manajemen LEXLAW <strong>tidak bertanggung jawab</strong> atas segala kerugian materiil/immateriil, sengketa, kerugian bisnis, atau konsekuensi hukum apa pun yang timbul akibat penggunaan atau ketergantungan penuh pada hasil keluaran AI.</p>
+            <h4>5. Data Regulasi & Sumber Resmi</h4>
+            <p>Data regulasi bersumber dari dokumen resmi pemerintah Indonesia (public domain - UU No. 28 Tahun 2014 tentang Hak Cipta Pasal 43 huruf a). Informasi ini bersifat referensi dan tidak menggantikan lembaran negara resmi.</p>`
+        },
+        terms: {
+            title: '📜 Syarat & Ketentuan Layanan',
+            html: `<h4>PENTING — Baca Syarat & Ketentuan ini sebelum menggunakan platform LexLaw.</h4>
+            <p>Dokumen ini mengatur hubungan antara Anda ("Pengguna") dan LexLaw ("Platform") terkait penggunaan layanan, fitur, dan konten yang disediakan.</p>
+            <h4>1. Penerimaan Syarat & Ketentuan</h4>
+            <p>Dengan mengakses, mendaftar, atau menggunakan layanan LexLaw dalam bentuk apa pun, Anda menyatakan telah membaca, memahami, dan menyetujui seluruh Syarat & Ketentuan ini serta Kebijakan Privasi dan Disclaimer yang terkait.</p>
+            <h4>2. Jangkauan Layanan</h4>
+            <p>LexLaw menyediakan platform berbasis web yang mengintegrasikan kecerdasan buatan (AI) untuk: pencarian & analisis peraturan perundang-undangan Indonesia, analisis kontrak bisnis (Contract Reviewer), pembuatan draft dokumen hukum, dan validasi prinsip hukum & perundang-undangan.</p>
+            <h4>3. Kewajiban Pengguna</h4>
+            <p>Anda bertanggung jawab sepenuhnya atas keamanan akun Anda. Anda dilarang menggunakan Layanan untuk melakukan aktivitas ilegal, termasuk tetapi tidak terbatas pada: pencucian uang, penipuan, pelanggaran hak cipta, serta pengaksesan sistem tanpa izin.</p>
+            <h4>4. Keamanan Akun & Kerahasiaan Data</h4>
+            <p>Anda bertanggung jawab untuk menjaga kerahasiaan kredensial masuk Anda. Dokumen kontrak yang diunggah untuk dianalisis diproses secara temporary dan tidak disimpan secara permanen di server kami.</p>`
+        },
+        refund: {
+            title: '💰 Kebijakan Pengembalian Dana (Refund Policy)',
+            html: `<h4>PENTING — Kebijakan Pengembalian Dana Layanan LexLaw.</h4>
+            <p>Di <strong>LexLaw</strong>, kami berkomitmen untuk memberikan layanan Legal Intelligence berbasis AI terbaik bagi instansi, perusahaan, dan profesional hukum di Indonesia.</p>
+            <h4>1. Jaminan Kepuasan 7 Hari (7-Day Money-Back Guarantee)</h4>
+            <p>Setiap pelanggan baru paket berlangganan berhak atas jaminan pengembalian dana penuh (100% refund) dalam kurun waktu <strong>7 (tujuh) hari kalender</strong> sejak tanggal transaksi pertama.</p>
+            <h4>2. Ketentuan Pengajuan Refund</h4>
+            <p>Pengajuan harus dikirimkan melalui email resmi ke <strong>support@lexlaw.arktech.id</strong> atau via WhatsApp ke <strong>0812-9741-4115</strong> dengan melampirkan bukti pembayaran dan alasan pembatalan.</p>
+            <h4>3. Pengecualian (Non-Refundable)</h4>
+            <ul>
+                <li>Permintaan refund yang diajukan setelah melewati batas waktu 7 hari sejak transaksi pertama tidak dapat diproses.</li>
+                <li>Langganan yang diperpanjang secara otomatis (renewal) tidak termasuk dalam garansi 7 hari, kecuali terdapat kendala sistem yang sah dari pihak kami.</li>
+                <li>Akun yang terbukti melanggar Syarat & Ketentuan Layanan tidak berhak atas pengembalian dana.</li>
+            </ul>
+            <h4>4. Waktu Proses Pengembalian</h4>
+            <p>Dana yang disetujui untuk di-refund akan dikembalikan melalui metode pembayaran asal atau transfer bank dalam waktu <strong>3 sampai 14 hari kerja</strong>.</p>`
+        }
+    };
+
+    function openModal(type) {
+        var data = MODALS[type];
+        if(!data) return;
+        document.getElementById('modalTitle').innerHTML = data.title;
+        document.getElementById('modalBody').innerHTML = data.html;
+        document.getElementById('modalOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if(e.key === 'Escape') closeModal();
+    });
+
     (function(){
         var btn=document.getElementById('hamburger'),menu=document.getElementById('mobileMenu');
         btn.addEventListener('click',function(){menu.classList.toggle('open');btn.textContent=menu.classList.contains('open')?'✕':'☰'});
@@ -464,7 +562,6 @@
             entries.forEach(function(e){if(e.isIntersecting) e.target.classList.add('in')});
         },{threshold:.12});
         document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el)});
-        // open first FAQ by default
         var first=document.querySelector('.faq-item'); if(first) first.classList.add('open');
     })();
     </script>
