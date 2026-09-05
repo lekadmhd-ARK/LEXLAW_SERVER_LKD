@@ -29,7 +29,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'role' => 'integer',
             'tenant_id' => 'string',
         ];
     }
@@ -41,7 +40,27 @@ class User extends Authenticatable
 
     public function getRoleDisplay(): ?string
     {
-        return static::roleEnum()[$this->role] ?? null;
+        return static::roleEnum()[$this->role] ?? $this->role;
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->role === 'owner';
+    }
+
+    public function isAdmin(): bool
+    {
+        return in_array($this->role, ['owner', 'admin']);
+    }
+
+    public function canEdit(): bool
+    {
+        return in_array($this->role, ['owner', 'admin', 'editor']);
+    }
+
+    public function isViewer(): bool
+    {
+        return $this->role === 'viewer';
     }
 
     public function company()
