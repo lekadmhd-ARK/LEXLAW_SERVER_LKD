@@ -513,19 +513,23 @@
         refund: {
             title: '💰 Kebijakan Pengembalian Dana (Refund Policy)',
             html: `<h4>PENTING — Kebijakan Pengembalian Dana Layanan LexLaw.</h4>
-            <p>Di <strong>LexLaw</strong>, kami berkomitmen untuk memberikan layanan Legal Intelligence berbasis AI terbaik bagi instansi, perusahaan, dan profesional hukum di Indonesia.</p>
-            <h4>1. Jaminan Kepuasan 7 Hari (7-Day Money-Back Guarantee)</h4>
-            <p>Setiap pelanggan baru paket berlangganan berhak atas jaminan pengembalian dana penuh (100% refund) dalam kurun waktu <strong>7 (tujuh) hari kalender</strong> sejak tanggal transaksi pertama.</p>
-            <h4>2. Ketentuan Pengajuan Refund</h4>
-            <p>Pengajuan harus dikirimkan melalui email resmi ke <strong>support@lexlaw.arktech.id</strong> atau via WhatsApp ke <strong>0812-9741-4115</strong> dengan melampirkan bukti pembayaran dan alasan pembatalan.</p>
+            <p>Di <strong>LexLaw</strong>, kami berkomitmen memberikan layanan AI terbaik. Kebijakan refund ini dirancang secara adil serta melindungi keberlangsungan layanan.</p>
+            <h4>1. Jaminan 7 Hari Bersyarat (7-Day Limited Guarantee)</h4>
+            <p>Pelanggan baru berhak mengajukan refund dalam <strong>7 hari kalender</strong> sejak transaksi pertama dengan ketentuan:</p>
+            <ul>
+                <li><strong>Refund 100% penuh</strong> berlaku jika pemakaian AI ≤ 5 kali total.</li>
+                <li>Jika pemakaian AI > 5 kali, refund dihitung <strong>prorata</strong> dikurangi biaya pemrosesan komputasi AI yang telah terpakai.</li>
+            </ul>
+            <h4>2. Ketentuan Pengajuan & Batas Klaim</h4>
+            <p>Pengajuan dikirim via email ke <strong>support@lexlaw.arktech.id</strong> atau WhatsApp <strong>0812-9741-4115</strong> + bukti bayar. <strong>Maksimal 1 kali refund per akun/perusahaan</strong> (mencegah abuse loop).</p>
             <h4>3. Pengecualian (Non-Refundable)</h4>
             <ul>
-                <li>Permintaan refund yang diajukan setelah melewati batas waktu 7 hari sejak transaksi pertama tidak dapat diproses.</li>
-                <li>Langganan yang diperpanjang secara otomatis (renewal) tidak termasuk dalam garansi 7 hari, kecuali terdapat kendala sistem yang sah dari pihak kami.</li>
-                <li>Akun yang terbukti melanggar Syarat & Ketentuan Layanan tidak berhak atas pengembalian dana.</li>
+                <li>Permintaan setelah melewati batas 7 hari sejak transaksi pertama.</li>
+                <li>Perpanjangan otomatis (renewal) atau akun yang terbukti melanggar Syarat & Ketentuan.</li>
+                <li><strong>Biaya pemrosesan AI yang sudah dikonsumsi tidak dapat dikembalikan</strong>.</li>
             </ul>
-            <h4>4. Waktu Proses Pengembalian</h4>
-            <p>Dana yang disetujui untuk di-refund akan dikembalikan melalui metode pembayaran asal atau transfer bank dalam waktu <strong>3 sampai 14 hari kerja</strong>.</p>`
+            <h4>4. Waktu Proses</h4>
+            <p>Dana dikembalikan via metode bayar asal / transfer bank dalam <strong>3–14 hari kerja</strong> setelah verifikasi selesai.</p>`
         }
     };
 
