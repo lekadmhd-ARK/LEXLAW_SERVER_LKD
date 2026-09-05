@@ -7,147 +7,206 @@
                 <h1 style="font-size: 24px; font-weight: 700; color: var(--text); margin: 0;">Analisis Kontrak AI</h1>
             </div>
             <p style="color: var(--muted); font-size: 15px; max-width: 600px; line-height: 1.5;">
-                Evaluasi risiko hukum, temukan klausul berbahaya, dan dapatkan rekomendasi perbaikan instan menggunakan teknologi kecerdasan buatan.
+                Evaluasi risiko hukum, temukan klausul berbahaya, dan dapatkan rekomendasi perbaikan instan.
             </p>
         </div>
 
-        <form action="{{ route('ai.contract-review') }}" method="POST" enctype="multipart/form-data" id="contractForm">
-            @csrf
-            <div style="display: grid; grid-template-columns: 1fr 350px; gap: 24px; align-items: start;">
-                
-                {{-- Left Column: Main Input --}}
-                <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--line); background: var(--bg2); border-radius: 12px;">
-                    <div style="padding: 16px 20px; border-bottom: 1px solid var(--line); background: rgba(var(--accent-rgb), 0.05);">
-                        <h3 style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent);">1. Input Dokumen</h3>
-                    </div>
-                    <div style="padding: 24px;">
-                        <label class="label" style="display: block; margin-bottom: 10px; font-weight: 600; color: var(--text);">Teks Kontrak</label>
-                        <textarea name="contract_text" id="contractText" 
-                            placeholder="Tempelkan isi kontrak Anda di sini (Minimal 50 karakter)..."
-                            style="width: 100%; min-height: 350px; padding: 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; outline: none; transition: border-color 0.2s;"
-                            required></textarea>
-                        
-                        <div style="margin-top: 20px; padding: 20px; border: 2px dashed var(--line); border-radius: 8px; text-align: center; background: var(--bg); transition: all 0.2s;" id="dropzone">
-                            <input type="file" name="contract_file" id="fileInput" accept=".pdf,.docx,.txt" style="display: none;">
-                            <div style="cursor: pointer;" onclick="document.getElementById('fileInput').click()">
-                                <span style="font-size: 24px; display: block; margin-bottom: 8px;">📁</span>
-                                <span style="font-size: 14px; color: var(--text); font-weight: 500;">Klik untuk unggah file</span>
-                                <span style="font-size: 12px; color: var(--muted); display: block; margin-top: 4px;">PDF, DOCX, atau TXT (Maks 10MB)</span>
-                            </div>
-                            <div id="fileInfo" style="display: none; margin-top: 12px; font-size: 13px; color: var(--ok); font-weight: 500;"></div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Right Column: Settings & Actions --}}
-                <div style="display: flex; flex-direction: column; gap: 24px;">
-                    {{-- Settings Card --}}
-                    <div class="card" style="padding: 0; border: 1px solid var(--line); background: var(--bg2); border-radius: 12px;">
-                        <div style="padding: 16px 20px; border-bottom: 1px solid var(--line);">
-                            <h3 style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text);">2. Pengaturan</h3>
-                        </div>
-                        <div style="padding: 20px;">
-                            <div style="margin-bottom: 20px;">
-                                <label class="label" style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text);">Jenis Kontrak</label>
-                                <select name="contract_type" style="width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; color: var(--text); font-size: 14px; outline: none;">
-                                    <option value="umum">Perjanjian Umum</option>
-                                    <option value="jual_beli">Jual Beli</option>
-                                    <option value="sewa_menyewa">Sewa Menyewa</option>
-                                    <option value="kontrak_kerja">Kontrak Kerja / HR</option>
-                                    <option value="kerjasama">Kemitraan / Kerjasama</option>
-                                    <option value="nda">Kerahasiaan (NDA)</option>
-                                </select>
-                            </div>
-                            
-                            <div style="padding: 12px; background: var(--accent-bg); border-radius: 8px; border: 1px solid var(--accent);">
-                                <div style="display: flex; gap: 10px; align-items: flex-start;">
-                                    <span style="font-size: 16px;">💡</span>
-                                    <p style="font-size: 12px; color: var(--text); line-height: 1.4; margin: 0;">
-                                        Gunakan model <strong>ARK</strong> untuk analisis hukum Indonesia yang lebih akurat dan mendalam.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Action Card --}}
-                    <div class="card" style="padding: 20px; border: 1px solid var(--line); background: var(--bg2); border-radius: 12px;">
-                        <button type="submit" id="analyzeBtn"
-                            style="width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; transition: transform 0.1s, opacity 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span>Mulai Analisis AI</span>
-                        </button>
-                        <p style="text-align: center; font-size: 11px; color: var(--muted); margin-top: 12px;">
-                            Estimasi waktu proses: 10-30 detik tergantung panjang teks.
-                        </p>
-                    </div>
-                </div>
+        {{-- Input Method Selection --}}
+        <div class="card" style="padding: 0; border: 1px solid var(--line); background: var(--bg2); border-radius: 12px; margin-bottom: 24px;">
+            <div style="padding: 16px 20px; border-bottom: 1px solid var(--line); background: rgba(var(--accent-rgb), 0.05);">
+                <h3 style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent);">Pilih Metode Input</h3>
             </div>
-        </form>
-
-        {{-- Result Section (Hidden by default) --}}
-        <div id="resultSection" style="display: none; margin-top: 32px;">
-            <div class="card" style="padding: 0; border: 1px solid var(--line); background: var(--bg2); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                <div style="padding: 16px 24px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; background: rgba(34, 197, 94, 0.05);">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="color: var(--ok); font-size: 20px;">✅</span>
-                        <h3 style="font-size: 16px; font-weight: 700; color: var(--text); margin: 0;">Hasil Analisis Profesional</h3>
+            <div style="padding: 20px;">
+                <div class="radio-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                    {{-- Text Input Option --}}
+                    <div class="radio-option" style="padding: 16px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg); transition: all 0.2s; cursor: pointer;" id="opt-text" data-type="text">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📝</div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--text);">Input Teks</div>
+                            <div style="font-size: 13px; color: var(--muted);">Tempelkan kontrak langsung</div>
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-secondary btn-sm" id="copyResult" style="padding: 6px 12px; font-size: 12px;">📋 Salin</button>
+                    {{-- File Upload Option --}}
+                    <div class="radio-option" style="padding: 16px; border: 2px solid var(--line); border-radius: 8px; background: var(--bg); transition: all 0.2s; cursor: pointer;" id="opt-file" data-type="file">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📁</div>
+                        <div>
+                            <div style="font-weight: 600; color: var(--text);">Unggah File</div>
+                            <div style="font-size: 13px; color: var(--muted);">PDF, DOCX, atau TXT (maks 10MB)</div>
+                        </div>
                     </div>
                 </div>
-                <div style="padding: 32px; color: var(--text); line-height: 1.8; font-size: 15px;" id="analysisOutput">
-                    {{-- AI content injected here --}}
-                </div>
-                <div style="padding: 16px 24px; border-top: 1px solid var(--line); background: var(--bg); display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 12px; color: var(--muted);" id="resultUid">UID: ---</span>
-                    <span style="font-size: 11px; color: var(--muted);">© 2026 LAWLEX v2 AI System</span>
+                <div id="feedback-area" style="padding: 12px; border-radius: 6px; margin-top: 12px; display: none; font-size: 13px; line-height: 1.5;">
+                    <span id="feedback-icon"></span>
+                    <span id="feedback-text"></span>
                 </div>
             </div>
         </div>
+
+        {{-- Form Container (visible based on selection) --}}
+        <form action="{{ route('ai.contract-review') }}" method="POST" enctype="multipart/form-data" id="contractForm">
+            @csrf
+            
+            {{-- Hidden fields --}}
+            <input type="hidden" name="contract_type" value="umum">
+            
+            {{-- Text Input Area --}}
+            <div id="text-area" style="display: none; margin-bottom: 24px;">
+                <div style="margin-bottom: 16px;">
+                    <label class="label" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text);">Teks Kontrak</label>
+                    <textarea name="contract_text" id="contractText"
+                        placeholder="Tempelkan isi kontrak Anda di sini (Minimal 50 karakter)..."
+                        style="width: 100%; min-height: 350px; padding: 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; outline: none; transition: border-color 0.2s;"
+                        required></textarea>
+                    <small style="color: var(--muted); font-size: 12px;">Minimal 50 karakter untuk analisis yang akurat</small>
+                </div>
+            </div>
+
+            {{-- File Upload Area --}}
+            <div id="file-area" style="display: none; margin-bottom: 24px;">
+                <div style="margin-bottom: 16px;">
+                    <label class="label" style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text);">Unggah File Kontrak</label>
+                    <div style="position: relative;">
+                        <input type="file" name="contract_file" id="contractFile"
+                            accept=".pdf,.docx,.txt"
+                            style="width: 100%; padding: 12px 16px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); font-size: 14px; cursor: pointer; outline: none;">
+                        <div id="file-info" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; padding: 12px 16px; pointer-events: none; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 13px; min-height: 44px; display: flex; align-items: center; justify-content: center;">
+                            <span>Klik atau seret file di sini</span>
+                        </div>
+                    </div>
+                    <div id="file-name" style="margin-top: 8px; font-size: 13px; color: var(--ok); display: none; font-weight: 500;"></div>
+                </div>
+                <small style="color: var(--muted); font-size: 12px;">Format: PDF, DOCX, atau TXT (maks 10MB)</small>
+            </div>
+
+            {{-- Action Area --}}
+            <div style="margin-top: 32px; text-align: center;">
+                <button type="submit" id="analyzeBtn"
+                    style="padding: 14px 32px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 15px; cursor: pointer; transition: transform 0.1s, opacity 0.2s; display: inline-block;"
+                    onclick="this.disabled=true; this.innerHTML='<span class=\"spinner-border spinner-border-sm\" role=\"status\" aria-hidden=\"true\"></span> Menganalisis...';">
+                    Mulai Analisis AI
+                </button>
+            </div>
+        </form>
     </div>
 
     <style>
-        .card { transition: border-color 0.2s; }
-        #dropzone.dragover { border-color: var(--accent); background: var(--accent-bg); }
-        .cr-btn:active { transform: scale(0.98); }
-        #analysisOutput h1, #analysisOutput h2, #analysisOutput h3 { color: var(--accent); margin-top: 24px; margin-bottom: 12px; }
-        #analysisOutput p { margin-bottom: 16px; }
-        #analysisOutput ul, #analysisOutput ol { margin-bottom: 16px; padding-left: 20px; }
-        #analysisOutput li { margin-bottom: 8px; }
-        #analysisOutput strong { color: var(--text); font-weight: 700; }
+        .radio-option:hover { border-color: var(--accent); background: var(--accent-bg); }
+        .radio-option.selected { border-color: var(--accent); background: var(--accent-box); }
+        #feedback-area { display: block; }
         
-        /* Dark/Light mode overrides for specific elements if needed */
+        /* Dark/Light mode overrides */
         [data-theme="light"] .card { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
     </style>
 
     <script>
-        const fileInput = document.getElementById('fileInput');
-        const fileInfo = document.getElementById('fileInfo');
-        const dropzone = document.getElementById('dropzone');
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                fileInfo.textContent = `📄 ${e.target.files[0].name} (${(e.target.files[0].size / 1024 / 1024).toFixed(2)}MB)`;
-                fileInfo.style.display = 'block';
+        // Initialize variables first
+        const optText = document.getElementById('opt-text');
+        const optFile = document.getElementById('opt-file');
+        const textArea = document.getElementById('text-area');
+        const fileArea = document.getElementById('file-area');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const feedbackArea = document.getElementById('feedback-area');
+        const feedbackIcon = document.getElementById('feedback-icon');
+        const feedbackText = document.getElementById('feedback-text');
+        
+        // Set default state (text option selected)
+        optText.classList.add('selected');
+        textArea.style.display = 'block';
+        
+        // Radio option click handlers
+        optText.addEventListener('click', function() {
+            selectOption('text');
+        });
+        
+        optFile.addEventListener('click', function() {
+            selectOption('file');
+        });
+        
+        function selectOption(type) {
+            // Update visual selection
+            if (type === 'text') {
+                optText.classList.add('selected');
+                optFile.classList.remove('selected');
+                textArea.style.display = 'block';
+                fileArea.style.display = 'none';
+                feedbackArea.style.display = 'none';
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = 'Mulai Analisis AI';
+                document.getElementById('contractText').focus();
+            } else {
+                optFile.classList.add('selected');
+                optText.classList.remove('selected');
+                textArea.style.display = 'none';
+                fileArea.style.display = 'block';
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = 'Mulai Analisis AI';
+            }
+        }
+        
+        // File input change handler
+        const fileInput = document.getElementById('contractFile');
+        const fileName = document.getElementById('file-name');
+        
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                
+                if (sizeMB > 10) {
+                    showFeedback('error', 'File terlalu besar! Maksimal 10MB.');
+                    fileInput.value = '';
+                    return;
+                }
+                
+                fileName.textContent = `📄 ${file.name} (${sizeMB}MB)`;
+                fileName.style.display = 'block';
+                showFeedback('success', 'File siap diunggah.');
             }
         });
-
-        // Form Submission via AJAX to show results on the same page nicely
+        
+        // Show feedback function
+        function showFeedback(type, message) {
+            feedbackIcon.className = type === 'success' ? '✅' : '❌';
+            feedbackText.textContent = message;
+            feedbackArea.style.display = 'block';
+            
+            setTimeout(() => {
+                feedbackArea.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Form submit handler
         document.getElementById('contractForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('analyzeBtn');
-            const resultSection = document.getElementById('resultSection');
-            const output = document.getElementById('analysisOutput');
-            const uidText = document.getElementById('resultUid');
             
-            btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Menganalisis Kontrak...`;
+            const hasText = document.getElementById('contractText').value.trim().length >= 50;
+            const hasFile = document.getElementById('contractFile').files.length > 0;
             
-            const formData = new FormData(e.target);
+            // Validation: Hanya boleh salah satu saja
+            if (hasText && hasFile) {
+                showFeedback('error', 'Silakan gunakan HANYA text MATAU file, tidak keduanya.');
+                return;
+            }
+            
+            if (!hasText && !hasFile) {
+                showFeedback('error', 'Silakan masukkan teks kontrak atau unggah file terlebih dahulu.');
+                return;
+            }
+            
+            // If text is selected but too short, show warning
+            if (type === 'text' && !hasText) {
+                showFeedback('error', 'Teks kontrak minimal 50 karakter.');
+                return;
+            }
+            
+            // Proceed with analysis
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Menganalisis...';
+            
+            const formData = new FormData(document.getElementById('contractForm'));
             
             try {
-                const response = await fetch(e.target.action, {
+                const response = await fetch(document.getElementById('contractForm').action, {
                     method: 'POST',
                     body: formData,
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -156,24 +215,29 @@
                 const data = await response.json();
                 
                 if (data.success) {
+                    const output = document.getElementById('analysisOutput');
+                    const uidText = document.getElementById('resultUid');
+                    
                     output.innerHTML = formatMarkdown(data.answer);
                     uidText.textContent = `UID: ${data.uid}`;
+                    
+                    // Show result section
+                    const resultSection = document.getElementById('resultSection');
                     resultSection.style.display = 'block';
                     resultSection.scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    alert('Gagal: ' + (data.message || 'Terjadi kesalahan sistem.'));
+                    showFeedback('error', 'Gagal: ' + (data.message || 'Terjadi kesalahan sistem.'));
                 }
             } catch (err) {
                 console.error(err);
                 alert('Terjadi kesalahan koneksi ke server.');
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = `Mulai Analisis AI`;
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = 'Mulai Analisis AI';
             }
         });
-
+        
         function formatMarkdown(text) {
-            // Simple markdown renderer for result presentation
             return text
                 .replace(/^### (.*$)/gim, '<h3>$1</h3>')
                 .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -183,14 +247,5 @@
                 .replace(/^\- (.*$)/gim, '<li>$1</li>')
                 .replace(/\n/gim, '<br>');
         }
-
-        document.getElementById('copyResult').addEventListener('click', function() {
-            const content = document.getElementById('analysisOutput').innerText;
-            navigator.clipboard.writeText(content).then(() => {
-                const originalText = this.innerText;
-                this.innerText = '✅ Tersalin';
-                setTimeout(() => this.innerText = originalText, 2000);
-            });
-        });
     </script>
 </x-layouts.base>
