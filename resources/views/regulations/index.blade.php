@@ -12,11 +12,11 @@
         {{-- Sumber Data & Hak Cipta --}}
         <div class="card" style="padding:16px;margin-bottom:16px">
             <div style="font-size:12px;font-weight:600;color:var(--accent);text-transform:uppercase;margin-bottom:8px">📖 Sumber Data & Hak Cipta</div>
-            <div style="font-size:12px;line-height:1.6;color:var(--text-muted)">
-                <p style="margin-bottom:6px"><strong>Sumber Data Utama</strong> Data regulasi bersumber langsung dari dokumen resmi milik pemerintah Indonesia (Lembaran Negara, Direktori Hukum Kementerian, JDIH Nasional). Dokumen publik resmi ini tidak dilindungi oleh hak cipta</p>
-                <p style="margin-bottom:6px"><strong>Hak Cipta Peraturan</strong> Peraturan perundang-undangan Indonesia bersifat public domain — sah secara hukum untuk disalin, disebarluaskan, dan dimasukkan ke dalam database aplikasi</p>
-                <p style="margin-bottom:6px"><strong>Cara Pengumpulan Data</strong> Manual (download PDF resmi) atau otomatis (crawler ke portal JDIH/situs kementerian</p>
-                <p><strong>Tanggung Jawab Pengembang</strong> Aplikasi ini adalah penyedia mesin pengindeks dan kurator, bukan pembuat aturan</p>
+            <div style="font-size:12px;line-height:1.6;color:var(--muted)">
+                <p style="margin-bottom:6px"><strong>Sumber Data Utama</strong> — Data regulasi bersumber langsung dari dokumen resmi milik pemerintah Indonesia (Lembaran Negara, Direktori Hukum Kementerian, JDIH Nasional). Dokumen publik resmi ini tidak dilindungi oleh hak cipta.</p>
+                <p style="margin-bottom:6px"><strong>Hak Cipta Peraturan</strong> — Peraturan perundang-undangan Indonesia bersifat public domain — sah secara hukum untuk disalin, disebarluaskan, dan dimasukkan ke dalam database aplikasi.</p>
+                <p style="margin-bottom:6px"><strong>Cara Pengumpulan Data</strong> — Manual (download PDF resmi) atau otomatis (crawler ke portal JDIH/situs kementerian).</p>
+                <p><strong>Tanggung Jawab Pengembang</strong> — Aplikasi ini adalah penyedia mesin pengindeks dan kurator, bukan pembuat aturan.</p>
             </div>
         </div>
 
@@ -93,7 +93,7 @@
                         <td>{{ $regulations->firstItem() + $i }}</td>
                         <td>
                             <div style="font-weight:600;color:var(--text)">{{ $r->title }}</div>
-                            <div style="font-size:12px;color:var(--text-muted)">{{ $r->number ? 'No. '.$r->number : '' }} {{ $r->year ? 'Tahun '.$r->year : '' }}</div>
+                            <div style="font-size:12px;color:var(--muted)">{{ $r->number ? 'No. '.$r->number : '' }} {{ $r->year ? 'Tahun '.$r->year : '' }}</div>
                         </td>
                         <td>
                             <span style="padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;background:{{ $r->hierarchy_level=='1'?'#3b82f620':($r->hierarchy_level=='2'?'#8b5cf620':($r->hierarchy_level=='3'?'#ec489920':($r->hierarchy_level=='4'?'#f59e0b20':'#22c55e20'))) }};color:{{ $r->hierarchy_level=='1'?'#3b82f6':($r->hierarchy_level=='2'?'#8b5cf6':($r->hierarchy_level=='3'?'#ec4899':($r->hierarchy_level=='4'?'#f59e0b':'#22c55e'))) }}">
@@ -109,20 +109,19 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" style="padding:32px;text-align:center;color:var(--text-muted)">Belum ada regulasi.</td></tr>
                 @endforelse
                 </tbody>
             </table>
         </div>
 
         {{-- Info Pagination --}}
-        <div style="margin-top:16px;color:var(--text-muted);font-size:13px;text-align:center">
+        <div style="margin-top:16px;color:var(--muted);font-size:13px;text-align:center">
             Total: <strong>{{ $stats['total'] }}</strong> regulasi | Menampilkan {{ $regulations->count() }} dari {{ $regulations->total() }} ({{ $regulations->firstItem() ?? 0 }}–{{ $regulations->lastItem() ?? 0 }})
         </div>
 
         {{-- Disclaimer --}}
-        <div style="margin-top:24px;padding:16px;border:1px solid var(--line);border-radius:8px;font-size:11px;color:var(--text-muted);line-height:1.6">
-            <strong>Disclaimer</strong> Data regulasi bersumber dari dokumen resmi pemerintah Indonesia (public domain). Informasi ini bersifat referensi dan tidak menggantikan dokumen resmi. Aplikasi ini adalah kurator independen dan tidak berafiliasi dengan instansi pemerintah mana pun.
+        <div style="margin-top:24px;padding:16px;border:1px solid var(--line);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6">
+            <strong>Disclaimer</strong> — Data regulasi bersumber dari dokumen resmi pemerintah Indonesia (public domain). Informasi ini bersifat referensi dan tidak menggantikan dokumen resmi. Aplikasi ini adalah kurator independen dan tidak berafiliasi dengan instansi pemerintah mana pun.
         </div>
     </div>
 
