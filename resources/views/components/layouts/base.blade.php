@@ -14,8 +14,8 @@
     </script>
     <style>
         /* ========== THEME ========== */
-        :root,[data-theme="dark"]{--bg:#0a0c10;--bg2:#11141a;--text:#e4e7eb;--muted:#787c85;--accent:#5e6ad2;--accent-bg:rgba(94,106,210,.15);--line:#303444;--ok:#22c55e;--err:#ef4444;--warn:#f59e0b;--sidebar-w:264px;--sidebar-w-mini:76px;--radius:12px}
-        [data-theme="light"]{--bg:#fff;--bg2:#f5f6f8;--text:#111827;--muted:#6b7280;--accent:#5e6ad2;--accent-bg:rgba(94,106,210,.12);--line:#e5e7eb;--ok:#16a34a;--err:#dc2626;--warn:#d97706}
+        :root,[data-theme="dark"]{--bg:#0a0c10;--bg2:#11141a;--text:#e4e7eb;--muted:#787c85;--accent:#5e6ad2;--accent-rgb:94,106,210;--accent-bg:rgba(94,106,210,.15);--line:#303444;--ok:#22c55e;--err:#ef4444;--warn:#f59e0b;--sidebar-w:264px;--sidebar-w-mini:76px;--radius:12px}
+        [data-theme="light"]{--bg:#fff;--bg2:#f5f6f8;--text:#111827;--muted:#6b7280;--accent:#5e6ad2;--accent-rgb:94,106,210;--accent-bg:rgba(94,106,210,.12);--line:#e5e7eb;--ok:#16a34a;--err:#dc2626;--warn:#d97706}
 
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         html{font-family:'Inter',system-ui,-apple-system,sans-serif}
