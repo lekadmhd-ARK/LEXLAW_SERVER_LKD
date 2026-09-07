@@ -15,6 +15,11 @@
 
         <div style="height:1px;background:var(--line);margin:12px 0"></div>
 
+        <!-- Case Law -->
+        <a href="/putusans" class="nav-link {{ $active === 'putusans' ? 'active' : '' }}">📜 Putusan</a>
+
+        <div style="height:1px;background:var(--line);margin:12px 0"></div>
+
         <!-- AI Modules -->
         <a href="/ai/lex-qna" class="nav-link {{ $active === 'lex-qna' ? 'active' : '' }}">✦ Lex Q&A</a>
         <a href="/ai/draft" class="nav-link {{ $active === 'draft' ? 'active' : '' }}">✎ Draft DOCX</a>

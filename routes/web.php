@@ -14,6 +14,7 @@ use App\Http\Controllers\RegulationController;
 use App\Http\Controllers\RegulationContentController;
 use App\Http\Controllers\LegalGlossaryController;
 use App\Http\Controllers\ConsolidationController;
+use App\Http\Controllers\PutusanController;
 use App\Http\Controllers\TeamWorkspaceController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\UserController;
@@ -82,6 +83,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('regulation-contents', RegulationContentController::class)->only(['index', 'store', 'update']);
     Route::resource('legal-glossary', LegalGlossaryController::class);
     Route::resource('consolidations', ConsolidationController::class)->only(['index', 'store', 'update']);
+    Route::resource('putusans', PutusanController::class)->only(['index', 'show']);
     Route::resource('team-workspaces', TeamWorkspaceController::class)->only(['index', 'store']);
     Route::resource('companies', CompanyController::class)->only(['index', 'show']);
     Route::resource('users', UserController::class)->only(['index', 'show']);
