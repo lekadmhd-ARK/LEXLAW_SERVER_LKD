@@ -15,22 +15,21 @@ class DashboardController extends Controller
         $user = $request->user();
         $tenantId = $user->tenant_id;
 
-        // Stat riil dari DB
-        $totalRegs = Regulation::where('tenant_id', $tenantId)->count();
-        $uuCount = Regulation::where('tenant_id', $tenantId)->where('hierarchy_level', '1')->count();
-        $ppCount = Regulation::where('tenant_id', $tenantId)->where('hierarchy_level', '2')->count();
-        $perpresCount = Regulation::where('tenant_id', $tenantId)->where('hierarchy_level', '3')->count();
-        $permenCount = Regulation::where('tenant_id', $tenantId)->where('hierarchy_level', '4')->count();
-        $perdaCount = Regulation::where('tenant_id', $tenantId)->where('hierarchy_level', '5')->count();
+        // Stat riil dari DB — data regulasi bersifat publik (global, bukan per-tenant)
+        $totalRegs = Regulation::count();
+        $uuCount = Regulation::where('hierarchy_level', '1')->count();
+        $ppCount = Regulation::where('hierarchy_level', '2')->count();
+        $perpresCount = Regulation::where('hierarchy_level', '3')->count();
+        $permenCount = Regulation::where('hierarchy_level', '4')->count();
+        $perdaCount = Regulation::where('hierarchy_level', '5')->count();
 
         // Count glossary
         $glossaryCount = class_exists('\App\Models\LegalGlossary') 
             ? LegalGlossary::where('tenant_id', $tenantId)->count() 
             : 0;
 
-        // 5 Regulasi Terbaru
-        $latestRegs = Regulation::where('tenant_id', $tenantId)
-            ->latest()
+        // 5 Regulasi Terbaru (global)
+        $latestRegs = Regulation::latest()
             ->take(5)
             ->get();
 
@@ -38,14 +37,14 @@ class DashboardController extends Controller
         $aiStatus = 'offline';
         $aiStatusColor = 'danger';
         try {
-            $aiUrl = env('AI_BASE_URL', 'http://127.0.0.1:20128/v1');
-            $aiKey = env('AI_API_KEY', '');
+            $aiUrl = config('services.ai.base_url', 'http://127.0.0.1:20128/v1');
+            $aiKey = config('services.ai.key');
             $t0 = microtime(true);
             $resp = Http::timeout(3)->withHeaders([
                 'Authorization' => 'Bearer ' . $aiKey,
                 'Content-Type' => 'application/json',
             ])->post(rtrim($aiUrl, '/') . '/chat/completions', [
-                'model' => env('AI_MODEL', 'gemini-3.5-flash'),
+                'model' => config('services.ai.model', 'ARK'),
                 'messages' => [['role' => 'user', 'content' => 'ping']],
                 'max_tokens' => 1,
             ]);

@@ -304,6 +304,67 @@ class LexlawE2eTest extends TestCase
     }
 
     /** @test */
+    public function test_regulations_publik_semua_user_lihat_semua_data()
+    {
+        // Ambil user dari tenant yang berbeda-beda; mereka HARUS melihat semua regulasi lintas tenant
+        $users = User::where('role', '!=', 1)->get(); // non-superadmin
+        if ($users->isEmpty()) {
+            $this->markTestSkipped('Tidak ada user non-admin untuk diuji.');
+        }
+
+        $allCount = \App\Models\Regulation::count();
+        $this->assertGreaterThanOrEqual(2, $allCount, 'Butuh minimal 2 regulasi untuk menguji lintas tenant.');
+
+        foreach ($users as $u) {
+            $dom = $this->actingAs($u)->get('/regulations')->getContent();
+
+            // Pastikan halaman OK dan SEMUA regulasi masuk dalam total info pagination
+            $this->assertStringContainsString('Total: <strong>', $dom, "henti total utk user {$u->email}");
+            $this->assertStringContainsString((string)$allCount, $dom, "user {$u->email} (tenant {$u->tenant_id}) tidak melihat semua regulasi");
+
+            // Detail regulasi dari tenant lain juga terbuka
+            $other = \App\Models\Regulation::where('tenant_id', '!=', $u->tenant_id)->first();
+            if ($other) {
+                $this->actingAs($u)->get("/regulations/{$other->id}")->assertOk();
+            }
+        }
+    }
+
+    /** @test */
+    public function test_regulations_publik_semua_user_lihat_semua_data_dashboard_stat()
+    {
+        // Dashboard harus menampilkan statistik regulasi global (tidak di-filter per tenant)
+        $u = User::where('email', 'user2@gmail.com')->first() ?? User::where('role', '!=', 1)->first();
+        if (!$u) {
+            $this->markTestSkipped('Tidak ada user untuk diuji.');
+        }
+        $allCount = \App\Models\Regulation::count();
+        $dom = $this->actingAs($u)->get('/dashboard')->getContent();
+        $this->assertStringContainsString((string)$allCount, $dom, "dashboard user {$u->email} tidak menampilkan total regulasi global ({$allCount})");
+    }
+
+    /** @test */
+    public function test_regulasi_tidak_boleh_double_title()
+    {
+        $u = $this->user();
+        $existing = \App\Models\Regulation::first();
+        if (!$existing) {
+            $this->markTestSkipped('Tidak ada regulasi untuk diuji.');
+        }
+        $before = \App\Models\Regulation::count();
+
+        // Store dengan title yang sama harus ditolak (validation error) — cegah double data
+        $resp = $this->actingAs($u)->post('/regulations', [
+            'title' => $existing->title,
+            'hierarchy_level' => '1',
+            'status' => 'active',
+        ]);
+        $resp->assertSessionHasErrors('title');
+
+        $this->assertSame($before, \App\Models\Regulation::count(), 'Jumlah regulasi tidak boleh bertambah saat title ganda ditolak');
+    }
+
+    /** @test */
     public function test_smoke_halaman_tabel_admin()
     {
         $admin = $this->user();

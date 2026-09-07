@@ -39,8 +39,9 @@ class RegulationsSeeder extends Seeder
 
         $pasalCount = 0;
         foreach ($regs as $reg) {
+            // Data regulasi bersifat publik & unik global — jangan key-kan tenant_id agar tidak double per tenant.
             $regulation = Regulation::updateOrCreate(
-                ['number' => $reg['number'], 'year' => $reg['year'], 'category' => $reg['category'], 'tenant_id' => $tenantId],
+                ['number' => $reg['number'], 'year' => $reg['year'], 'category' => $reg['category']],
                 [
                     'title' => $reg['title'],
                     'status' => $reg['status'],

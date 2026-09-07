@@ -489,6 +489,14 @@ class RegulationController extends Controller
             'content_text' => 'nullable|string',
         ]);
 
+        // Cegah double data: judul yang sama (case-insensitive) tidak boleh dibuat ulang.
+        $exists = Regulation::whereRaw('lower(trim(title)) = ?', [mb_strtolower(trim($validated['title']))])->first();
+        if ($exists) {
+            return back()->withInput()->withErrors([
+                'title' => 'Regulasi dengan judul yang sama sudah ada (ID #' . $exists->id . '). Data regulasi bersifat publik & tidak boleh ganda.',
+            ]);
+        }
+
         Regulation::create(array_merge($validated, [
             'tenant_id' => $request->user()->tenant_id,
             'company_id' => $request->user()->company_id,
@@ -554,6 +562,17 @@ class RegulationController extends Controller
         ]);
 
         $validated['is_active'] = $request->has('is_active');
+
+        // Cegah double data: judul yang sama (case-insensitive) milik regulasi lain tidak boleh dipakai.
+        $exists = Regulation::whereRaw('lower(trim(title)) = ?', [mb_strtolower(trim($validated['title']))])
+            ->where('id', '!=', $regulation->id)
+            ->first();
+        if ($exists) {
+            return back()->withInput()->withErrors([
+                'title' => 'Judul ini sudah dipakai regulasi lain (ID #' . $exists->id . '). Data regulasi bersifat publik & tidak boleh ganda.',
+            ]);
+        }
+
         $regulation->update($validated);
 
         return redirect("/regulations/{$regulation->id}")->with('success', 'Regulasi berhasil diperbarui.');
@@ -635,7 +654,13 @@ class RegulationController extends Controller
 
             $isActive = !str_contains(strtolower($title), 'dicabut') && !str_contains(strtolower($title), 'tidak berlaku');
 
-            $existing = \App\Models\Regulation::where('title', $title)->where('year', $year)->first();
+            $existing = \App\Models\Regulation::whereRaw('lower(trim(title)) = ?', [mb_strtolower(trim($title))])
+                ->orWhere(function ($w) use ($num, $year) {
+                    if (!empty($num) && !empty($year)) {
+                        $w->where('number', $num)->where('year', (int)$year);
+                    }
+                })
+                ->first();
             if ($existing) {
                 if (empty($existing->pdf_url) && !empty($pdfUrl)) {
                     $existing->update(['pdf_url' => $pdfUrl]);
