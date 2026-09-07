@@ -159,6 +159,14 @@ class DraftController extends Controller
             foreach ($regs as $r) {
                 $context .= "- {$r->category} No. {$r->number}/{$r->year} - {$r->title}, Pasal {$r->article_number}: " . substr($r->content, 0, 400) . "\n";
             }
+
+            // Tambah konteks live dari sumber resmi pemerintah bila konteks DB tipis.
+            if (strlen($context) < 600) {
+                $live = app(\App\Services\LegalSourceService::class)->getContext($instructions, 2);
+                if (!empty($live['context'])) {
+                    $context .= "\n--- KONTEKS LANGSUNG DARI SUMBER RESMI PEMERINTAH (live retrieval) ---\n" . $live['context'] . "\n";
+                }
+            }
         } catch (\Exception $e) {
             // table mungkin belum ada / fulltext index belum di-setup
         }

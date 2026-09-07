@@ -32,10 +32,36 @@ class ValidityCheckerController extends Controller
 
         // 3. Cari di database lokal
         $results = [];
+        $unmatched = [];
         foreach ($citations as $citation) {
             $localMatch = $this->findInLocalDB($citation);
             if ($localMatch) {
                 $results[] = array_merge($localMatch, ['source' => 'database']);
+            } else {
+                $unmatched[] = $citation;
+            }
+        }
+
+        // 3b. Live lookup dari sumber resmi (BPK / situs .go.id) untuk sitasi
+        //     yang tidak ada di database lokal, agar keaktifan tetap bisa diverifikasi.
+        $liveResults = [];
+        if (!empty($unmatched)) {
+            $service = app(\App\Services\LegalSourceService::class);
+            foreach ($unmatched as $citation) {
+                try {
+                    $ctx = $service->getContext($citation, 1);
+                    if (!empty($ctx['sources'])) {
+                        $src = $ctx['sources'][0];
+                        $liveResults[] = [
+                            'title' => $src['title'],
+                            'url' => $src['url'],
+                            'status' => null,
+                            'source' => 'live'
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    // lanjut sitasi berikutnya
+                }
             }
         }
 
@@ -44,8 +70,9 @@ class ValidityCheckerController extends Controller
 
         return view('ai.validity-checker', [
             'results' => $results,
+            'liveResults' => $liveResults,
             'aiAnalysis' => $aiAnalysis,
-            'message' => empty($results) ? 'Tidak ada sitasi regulasi terdeteksi di database lokal. Silakan tambahkan regulasi terlebih dahulu.' : null,
+            'message' => (empty($results) && empty($liveResults)) ? 'Tidak ada sitasi regulasi terdeteksi di database lokal. Silakan tambahkan regulasi terlebih dahulu.' : null,
         ]);
     }
 

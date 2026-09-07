@@ -53,6 +53,20 @@ class ContractReviewerController extends Controller
             return back()->withErrors(['contract_text' => 'Kontrak terlalu pendek atau kosong. Minimal 50 kata.']);
         }
 
+        // Konteks hukum live dari sumber resmi bila memungkinkan (misal kontrak menyebut peraturan).
+        $liveContext = '';
+        try {
+            $probe = mb_substr($contractText, 0, 2000);
+            if (preg_match('/(?:Undang-Undang|UU|PP(?:\.|\s)|Peraturan(?: Pemerintah| Presiden| Menteri| Daerah)?|Kepmen|Permen|Perda|No\.?\s*\d|[A-Z]{2,5})\b/i', $probe)) {
+                $live = app(\App\Services\LegalSourceService::class)->getContext($probe, 1);
+                if (!empty($live['context'])) {
+                    $liveContext = "\n\nKONTEKS REGULASI RESMI (referensi pasal/undang-undang terkait, dari peraturan.bpk.go.id / situs resmi .go.id):\n" . $live['context'];
+                }
+            }
+        } catch (\Exception $e) {
+            // live retrieval gagal -> lanjut tanpa konteks
+        }
+
         // Kirim ke AI Gateway
         try {
             $response = Http::withHeaders([
@@ -92,7 +106,7 @@ Analisis dengan fokus pada:
 5. Klausul force majeure yang lemah
 6. Termination clause
 7. Governing law
-8. Dispute resolution"
+8. Dispute resolution" . $liveContext
                     ],
                     [
                         'role' => 'user',

@@ -112,6 +112,25 @@
             </div>
         </div>
 
+        {{-- Saran Langsung dari Sumber Resmi (tidak tersimpan ke DB) --}}
+        @if(!empty($liveSuggestions))
+        <div class="card" style="margin-top:20px;padding:16px 20px">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--accent);margin-bottom:8px">🌐 Regulasi Terkait dari Sumber Resmi Pemerintah</div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Hasil ini diambil langsung dari <strong>peraturan.bpk.go.id</strong> dan situs resmi <strong>.go.id</strong> secara real-time (belum tersimpan di database). Klik untuk menelusuri atau gunakan <em>Fetch dari URL</em> untuk menyimpannya.</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+                @foreach($liveSuggestions as $ls)
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
+                    <div style="width:30px;height:30px;border-radius:8px;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🔗</div>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-weight:600;font-size:13px;color:var(--text);word-break:break-word">{{ $ls['title'] }}</div>
+                        <a href="{{ $ls['url'] }}" target="_blank" rel="noopener" style="font-size:12px;color:var(--accent);word-break:break-all">{{ $ls['url'] }}</a>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         {{-- Info Pagination --}}
         <div style="margin-top:16px;color:var(--muted);font-size:13px;text-align:center">
             Total: <strong>{{ $stats['total'] }}</strong> regulasi | Menampilkan {{ $regulations->count() }} dari {{ $regulations->total() }} ({{ $regulations->firstItem() ?? 0 }}–{{ $regulations->lastItem() ?? 0 }})

@@ -86,6 +86,18 @@ class RegulationController extends Controller
         // yang menscrape HTML asli terlebih dahulu.
         $webSearchPerformed = false;
 
+        // Saran live dari sumber resmi (peraturan.bpk.go.id / situs .go.id) ketika
+        // hasil lokal kosong — hanya ditampilkan sebagai link, TIDAK disimpan ke DB.
+        $liveSuggestions = [];
+        if ($request->filled('q') && $localResults->count() === 0) {
+            try {
+                $live = app(\App\Services\LegalSourceService::class)->search($request->q, 5);
+                $liveSuggestions = $live;
+            } catch (\Exception $e) {
+                $liveSuggestions = [];
+            }
+        }
+
         // 3) Filter koleksi (hierarchy/sector/active) tetap di collection.
         $allResults = $localResults;
 
@@ -126,7 +138,7 @@ class RegulationController extends Controller
             'active' => Regulation::where('is_active', true)->count(),
         ];
 
-        return view('regulations.index', compact('regulations', 'stats', 'webSearchPerformed') + ['searchQuery' => $request->q ?? '']);
+        return view('regulations.index', compact('regulations', 'stats', 'webSearchPerformed', 'liveSuggestions') + ['searchQuery' => $request->q ?? '']);
     }
 
     protected function searchVia9Router($query)

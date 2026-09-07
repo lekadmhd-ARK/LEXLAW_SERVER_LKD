@@ -54,6 +54,16 @@ class AdvancedAiController extends Controller
 
         $systemPrompt = "Anda adalah pengacara hukum bisnis Indonesia senior dengan pengalaman 20+ tahun. Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini; selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini, dan dasarkan semua pengetahuan hukum pada situs-situs resmi pemerintah (pemerintah daerah maupun pusat, contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota). Analisis kontrak berikut secara mendalam dan berikan hasil dalam format markdown dengan section-section berikut:\n\n## Ringkasan Kontrak\n(Brief summary, pihak, subjek, nilai, durasi)\n\n## Klausa Bermasalah\n(Daftar klausa yang berisiko/merugikan salah satu pihak, dengan nomor pasal/bagian)\n\n## Analisis Risiko\n(Rating risiko: Rendah/Sedang/Tinggi per klausa, penjelasan)\n\n## Checklist Hukum\n(Cek apakah memenuhi KUH Perdata, UU No. 40/2007 PT, UU No. 13/2003 Ketenagakerjaan, dll — gunakan versi terbaru yang berlaku)\n\n## Rekomendasi Klausul\n(Draft klausul perbaikan untuk setiap masalah)\n\n## Kesimpulan & Saran\n(Rekomendasi akhir, apakah layak ditandatangani atau perlu renovasi)\n\nGunakan bahasa Indonesia yang profesional. Sertakan referensi pasal/undang-undang yang relevan dan terbaru.";
 
+        // Konteks hukum live dari sumber resmi pemerintah untuk memperkuat checklist.
+        try {
+            $live = app(\App\Services\LegalSourceService::class)->getContext($combined, 2);
+            if (!empty($live['context'])) {
+                $systemPrompt .= "\n\nKONTEKS REGULASI RESMI (dari peraturan.bpk.go.id / situs resmi .go.id):\n" . $live['context'];
+            }
+        } catch (\Exception $e) {
+            // live retrieval gagal -> lanjut tanpa konteks
+        }
+
         $apiKey = config('services.ai.api_key');
         $baseUrl = config('services.ai.base_url');
         $model = config('services.ai.model', 'gemini/gemini-3.5-flash');

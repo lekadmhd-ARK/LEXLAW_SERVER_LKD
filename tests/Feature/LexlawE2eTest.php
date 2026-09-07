@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Plan;
 use App\Models\Company;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
 
 // Test non-destruktif: memakai data produksi yang ada, tidak mem-wipe DB.
 class LexlawE2eTest extends TestCase
@@ -373,5 +374,37 @@ class LexlawE2eTest extends TestCase
             $resp = $this->actingAs($admin)->get($url);
             $resp->assertOk();
         }
+    }
+
+    /** @test */
+    public function test_lexaqna_chat_mock_ai_supports_live_sources()
+    {
+        $u = $this->user();
+        if (!$u) {
+            $this->markTestSkipped('Tidak ada user admin untuk uji LexQna.');
+        }
+
+        // Mock seluruh request keluar agar deterministik (AI + pencarian sumber resmi).
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), 'chat/completions')) {
+                $answer = "Peraturan Menteri PU No. 6 Tahun 2026 adalah Perpres SPAM "
+                    . "2026-2030. Sumber resmi: https://peraturan.bpk.go.id/Details/350055/permen-pu-no-6-tahun-2026";
+                return Http::response([
+                    'choices' => [['message' => ['content' => $answer]]],
+                ], 200);
+            }
+            return Http::response('', 200);
+        });
+
+        $resp = $this->actingAs($u)->post('/ai/lex-qna', [
+            'question' => 'Apa isi Permen PU No. 6 Tahun 2026?',
+        ]);
+        $resp->assertOk();
+
+        $history = session('lexqna_history');
+        $this->assertNotEmpty($history);
+        $last = end($history);
+        $this->assertSame('assistant', $last['role']);
+        $this->assertStringContainsString('https://peraturan.bpk.go.id/Details/350055/', $last['content']);
     }
 }

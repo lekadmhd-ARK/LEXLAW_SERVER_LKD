@@ -215,6 +215,18 @@ class ConsolidationController extends Controller
             . "5. Setiap pasal punya field 'flag': UNCHANGED, MODIFIED, ADDED, REMOVED.\n"
             . "Format JSON: {\"pasal\":[{\"nomor\":\"1\",\"judul\":\"...\",\"flag\":\"...\",\"teks\":\"...\",\"catatan\":null}]}";
 
+        // Konteks live dari sumber resmi (versi terbaru regulasi terkait) untuk
+        // membantu menentukan prioritas versi yang berlaku.
+        try {
+            $probeTerms = collect($regs)->take(2)->map(fn($r) => $r->title . ' ' . $r->year)->implode(' ');
+            $live = app(\App\Services\LegalSourceService::class)->getContext($probeTerms, 1);
+            if (!empty($live['context'])) {
+                $system .= "\n\nVersi terbaru dari sumber resmi pemerintah (peraturan.bpk.go.id / situs .go.id) — gunakan untuk memverifikasi prioritas versi:\n" . $live['context'];
+            }
+        } catch (\Exception $e) {
+            // live retrieval gagal -> lanjut tanpa konteks
+        }
+
         $userMsg = "Sumber regulasi:\n";
         foreach ($regs as $r) {
             $userMsg .= "- {$r->title} (No.{$r->number} Tahun {$r->year})\n";

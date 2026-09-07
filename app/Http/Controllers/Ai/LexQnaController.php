@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Http\Controllers\Controller;
+use App\Services\LegalSourceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
@@ -25,46 +26,102 @@ class LexQnaController extends Controller
         $question = $validated['question'];
 
         $context = '';
+        $sources = [];
         try {
             $driver = DB::getDriverName();
+
+            // 1) RETRIEVE dari database lokal: regulation_contents (pasal) +
+            //    fallback content_text regulasi (tabel contents kerap kosong).
+            $contextResults = collect();
+
             if ($driver === 'pgsql') {
-                $contextResults = DB::select("
-                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
-                    FROM regulation_contents rc
-                    JOIN regulations r ON r.id = rc.regulation_id
-                    WHERE to_tsvector('english', coalesce(rc.content, '')) @@ plainto_tsquery(?)
-                    OR r.title LIKE ?
-                    LIMIT 5
-                ", [$question, "%$question%"]);
+                try {
+                    $ctxTmp = DB::select("
+                        SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
+                        FROM regulation_contents rc
+                        JOIN regulations r ON r.id = rc.regulation_id
+                        WHERE to_tsvector('english', coalesce(rc.content, '')) @@ plainto_tsquery(?)
+                        OR r.title LIKE ?
+                        LIMIT 5
+                    ", [$question, "%$question%"]);
+                    $contextResults = collect($ctxTmp);
+                } catch (\Exception $e) {
+                    $contextResults = collect();
+                }
+
+                if ($contextResults->count() < 3) {
+                    try {
+                        $regDocs = DB::select("
+                            SELECT r.title, r.number, r.year, r.category,
+                                   NULL AS article_number, r.content_text AS content
+                            FROM regulations r
+                            WHERE to_tsvector('simple', coalesce(r.title,'') || ' ' || coalesce(r.content_text,''))
+                                  @@ plainto_tsquery('simple', ?)
+                            ORDER BY r.year DESC
+                            LIMIT 3
+                        ", [$question]);
+                        foreach ($regDocs as $row) {
+                            $exists = $contextResults->contains(fn($c) => $c->title === $row->title && $c->year === $row->year);
+                            if (!$exists) {
+                                $contextResults->add($row);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // fallback like
+                        try {
+                            foreach (DB::select("
+                                SELECT r.title, r.number, r.year, r.category,
+                                       NULL AS article_number,
+                                       substring(r.content_text for 3000) AS content
+                                FROM regulations r
+                                WHERE r.title ILIKE ? OR r.content_text ILIKE ?
+                                ORDER BY r.year DESC
+                                LIMIT 3
+                            ", ["%$question%", "%$question%"]) as $row) {
+                                $contextResults->add($row);
+                            }
+                        } catch (\Exception $e2) {
+                            // abaikan
+                        }
+                    }
+                }
             } elseif ($driver === 'mysql') {
-                $contextResults = DB::select("
+                $contextResults = collect(DB::select("
                     SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
                     FROM regulation_contents rc
                     JOIN regulations r ON r.id = rc.regulation_id
                     WHERE MATCH(rc.content) AGAINST(? IN NATURAL LANGUAGE MODE)
                     OR r.title LIKE ?
                     LIMIT 5
-                ", [$question, "%$question%"]);
+                ", [$question, "%$question%"]));
             } else {
-                $contextResults = DB::select("
+                $contextResults = collect(DB::select("
                     SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
                     FROM regulation_contents rc
                     JOIN regulations r ON r.id = rc.regulation_id
                     WHERE rc.content LIKE ?
                     OR r.title LIKE ?
                     LIMIT 5
-                ", ["%$question%", "%$question%"]);
+                ", ["%$question%", "%$question%"]));
             }
 
             foreach ($contextResults as $row) {
-                $context .= "\n[" . $row->category . " " . $row->number . "/" . $row->year . " - " . $row->title . " " . $row->article_number . "]:\n";
-                $context .= $row->content . "\n";
+                $context .= "\n[" . $row->category . " " . $row->number . "/" . $row->year . " - " . $row->title . " " . ($row->article_number ?? '') . "]:\n";
+                $context .= mb_substr($row->content ?? '', 0, 2000) . "\n";
+            }
+
+            // 2) RETRIEVE live dari sumber resmi (peraturan.bpk.go.id + situs .go.id via search)
+            $live = app(LegalSourceService::class)->getContext($question, 2);
+            if (!empty($live['context'])) {
+                $context .= "\n\n--- KONTEKS LANGSUNG DARI SUMBER RESMI PEMERINTAH (live retrieval) ---\n"
+                    . $live['context'];
+                $sources = array_merge($sources, $live['sources']);
             }
         } catch (\Exception $e) {
             $contextResults = [];
         }
 
-        $systemPrompt = "Anda adalah LEXLAW Legal Intelligence. Jawab pertanyaan hukum Indonesia berdasarkan konteks regulasi. Berikan sitasi pasal.\n\nPENGETAHUAN AI:\n- Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini saja.\n- Selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini.\n- Dasarkan semua pengetahuan hukum pada situs-situs resmi pemerintah, baik pemerintah daerah maupun pemerintah pusat (contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota).\n- Jika tidak ada di konteks, jawab berdasarkan pengetahuan hukum umum Indonesia yang akurat dan terbaru.";
+        $systemPrompt = "Anda adalah LEXLAW Legal Intelligence. Jawab pertanyaan hukum Indonesia berdasarkan konteks regulasi. Berikan sitasi pasal.\n\nPENGETAHUAN AI:\n- Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini saja.\n- Selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini.\n- Dasarkan semua pengetahuan hukum pada situs-situs resmi pemerintah, baik pemerintah daerah maupun pemerintah pusat (contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota).\n- Jika tidak ada di konteks, jawab berdasarkan pengetahuan hukum umum Indonesia yang akurat dan terbaru.\n\nWAJIB: Jika jawaban memakai informasi dari KONTEKS LANGSUNG DARI SUMBER RESMI atau konteks regulasi, cantumkan URL sumber resmi (link) pada akhir jawaban.";
         if ($context) {
             $systemPrompt .= "\n\nKONTEKS:\n" . $context;
         }
@@ -93,7 +150,10 @@ class LexQnaController extends Controller
         $history[] = ['role' => 'assistant', 'content' => $answer];
         session(['lexqna_history' => $history]);
 
-        return view('ai.lex-qna', ['history' => $history]);
+        return view('ai.lex-qna', [
+            'history' => $history,
+            'lastSources' => $sources,
+        ]);
     }
 
     public function clear(Request $request)

@@ -76,6 +76,29 @@
         </div>
         @endif
 
+        {{-- Hasil Live Retrieval dari Sumber Resmi --}}
+        @if(!empty($liveResults) && count($liveResults) > 0)
+        <div class="card theme-card" style="margin-top:24px;padding:0;overflow:hidden">
+            <div class="theme-border-bottom" style="padding:16px 24px">
+                <div class="theme-accent" style="font-size:11px;font-weight:600;text-transform:uppercase">🌐 Ditemukan via Sumber Resmi Langsung</div>
+                <div class="theme-text" style="font-size:14px;margin-top:2px">Referensi ini tidak ada di database lokal, tapi ditemukan terbitan resminya (peraturan.bpk.go.id / situs .go.id)</div>
+            </div>
+            <div style="padding:0">
+                @foreach($liveResults as $lr)
+                <div class="theme-border-bottom" style="padding:16px 24px;display:flex;gap:16px;align-items:flex-start">
+                    <div style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:rgba(129,140,248,0.12);color:#818cf8">🌐</div>
+                    <div style="flex:1">
+                        <div class="theme-text" style="font-size:15px;font-weight:600">{{ $lr['title'] }}</div>
+                        <div style="margin-top:6px">
+                            <a href="{{ $lr['url'] }}" target="_blank" rel="noopener" class="theme-accent" style="font-size:12px;text-decoration:underline">🔗 Buka sumber resmi</a>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         {{-- Analisis AI --}}
         @if(!empty($aiAnalysis))
         <div class="card theme-ai-card" style="margin-top:24px">
