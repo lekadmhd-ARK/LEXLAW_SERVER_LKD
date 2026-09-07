@@ -62,7 +62,7 @@ class DraftController extends Controller
 
     protected function generateDraft($label, $date, $instructions, $context, $style)
     {
-        $base = "Anda adalah Senior Legal Drafter Indonesia yang sangat berpengalaman (Corporate Lawyer / Notaris). Buatlah draf dokumen hukum yang profesional, rinci, dan sesuai HUKUM POSITIF INDONESIA yang berlaku saat ini.\n\n";
+        $base = "Anda adalah Senior Legal Drafter Indonesia yang sangat berpengalaman (Corporate Lawyer / Notaris). Buatlah draf dokumen hukum yang profesional, rinci, dan sesuai HUKUM POSITIF INDONESIA yang berlaku saat ini.\n\nPENGETAHUAN AI:\n- Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini saja.\n- Selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini.\n- Dasarkan semua pengetahuan hukum pada situs-situs resmi pemerintah, baik pemerintah daerah maupun pemerintah pusat (contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota).\n- Referensi hukum wajib dicantumkan sesuai peraturan terbaru yang berlaku.\n\n";
 
         $gaya = "GAYA PENULISAN: " . $style['desc'] . ".\n";
 
@@ -100,9 +100,9 @@ class DraftController extends Controller
 
         try {
             $response = Http::timeout(180)->withToken(env('AI_API_KEY'))->post(
-                env('AI_BASE_URL', 'http://127.0.0.1:20128/v1') . '/chat/completions',
+                config('services.ai.base_url', 'http://127.0.0.1:20128/v1') . '/chat/completions',
                 [
-                    'model' => env('AI_MODEL', 'ARK'),
+                    'model' => config('services.ai.model', 'ARK'),
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
                         ['role' => 'user', 'content' => "Buat draf lengkap " . $label . " (gaya: " . $style['title'] . ")."],
@@ -126,14 +126,35 @@ class DraftController extends Controller
     {
         $context = "";
         try {
-            $regs = DB::select("
-                SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
-                FROM regulation_contents rc
-                JOIN regulations r ON r.id = rc.regulation_id
-                WHERE MATCH(rc.content) AGAINST(? IN NATURAL LANGUAGE MODE)
-                OR r.title LIKE ?
-                LIMIT 5
-            ", [$instructions, "%$instructions%"]);
+            $driver = DB::getDriverName();
+            if ($driver === 'pgsql') {
+                $regs = DB::select("
+                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
+                    FROM regulation_contents rc
+                    JOIN regulations r ON r.id = rc.regulation_id
+                    WHERE to_tsvector('english', coalesce(rc.content, '')) @@ plainto_tsquery(?)
+                    OR r.title LIKE ?
+                    LIMIT 5
+                ", [$instructions, "%$instructions%"]);
+            } elseif ($driver === 'mysql') {
+                $regs = DB::select("
+                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
+                    FROM regulation_contents rc
+                    JOIN regulations r ON r.id = rc.regulation_id
+                    WHERE MATCH(rc.content) AGAINST(? IN NATURAL LANGUAGE MODE)
+                    OR r.title LIKE ?
+                    LIMIT 5
+                ", [$instructions, "%$instructions%"]);
+            } else {
+                $regs = DB::select("
+                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
+                    FROM regulation_contents rc
+                    JOIN regulations r ON r.id = rc.regulation_id
+                    WHERE rc.content LIKE ?
+                    OR r.title LIKE ?
+                    LIMIT 5
+                ", ["%$instructions%", "%$instructions%"]);
+            }
 
             foreach ($regs as $r) {
                 $context .= "- {$r->category} No. {$r->number}/{$r->year} - {$r->title}, Pasal {$r->article_number}: " . substr($r->content, 0, 400) . "\n";

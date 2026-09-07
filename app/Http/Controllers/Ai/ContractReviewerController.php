@@ -56,14 +56,14 @@ class ContractReviewerController extends Controller
         // Kirim ke AI Gateway
         try {
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('AI_API_KEY'),
+                'Authorization' => 'Bearer ' . config('services.ai.key'),
                 'Content-Type' => 'application/json',
             ])->post(env('AI_BASE_URL'), [
                 'model' => 'gemini-3.5-flash',
                 'messages' => [
                     [
                         'role' => 'system',
-                        'content' => "Anda adalah ahli hukum Indonesia yang ahli dalam mengevaluasi kontrak bisnis. Analisis kontrak berikut ini secara mendalam dan berikan hasil dalam format JSON dengan struktur:
+                        'content' => "Anda adalah ahli hukum Indonesia yang ahli dalam mengevaluasi kontrak bisnis. Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini; selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini, dan dasar semua pengetahuan hukum pada situs-situs resmi pemerintah (pemerintah daerah maupun pusat, contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota). Analisis kontrak berikut ini secara mendalam dan berikan hasil dalam format JSON dengan struktur:
 
 {
   \"risk_score\": \"Rendah/Sedang/Tinggi\",

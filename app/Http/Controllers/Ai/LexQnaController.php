@@ -26,14 +26,35 @@ class LexQnaController extends Controller
 
         $context = '';
         try {
-            $contextResults = DB::select("
-                SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
-                FROM regulation_contents rc
-                JOIN regulations r ON r.id = rc.regulation_id
-                WHERE MATCH(rc.content) AGAINST(? IN NATURAL LANGUAGE MODE)
-                OR r.title LIKE ?
-                LIMIT 5
-            ", [$question, "%$question%"]);
+            $driver = DB::getDriverName();
+            if ($driver === 'pgsql') {
+                $contextResults = DB::select("
+                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
+                    FROM regulation_contents rc
+                    JOIN regulations r ON r.id = rc.regulation_id
+                    WHERE to_tsvector('english', coalesce(rc.content, '')) @@ plainto_tsquery(?)
+                    OR r.title LIKE ?
+                    LIMIT 5
+                ", [$question, "%$question%"]);
+            } elseif ($driver === 'mysql') {
+                $contextResults = DB::select("
+                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
+                    FROM regulation_contents rc
+                    JOIN regulations r ON r.id = rc.regulation_id
+                    WHERE MATCH(rc.content) AGAINST(? IN NATURAL LANGUAGE MODE)
+                    OR r.title LIKE ?
+                    LIMIT 5
+                ", [$question, "%$question%"]);
+            } else {
+                $contextResults = DB::select("
+                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
+                    FROM regulation_contents rc
+                    JOIN regulations r ON r.id = rc.regulation_id
+                    WHERE rc.content LIKE ?
+                    OR r.title LIKE ?
+                    LIMIT 5
+                ", ["%$question%", "%$question%"]);
+            }
 
             foreach ($contextResults as $row) {
                 $context .= "\n[" . $row->category . " " . $row->number . "/" . $row->year . " - " . $row->title . " " . $row->article_number . "]:\n";
@@ -43,16 +64,16 @@ class LexQnaController extends Controller
             $contextResults = [];
         }
 
-        $systemPrompt = "Anda adalah LEXLAW Legal Intelligence. Jawab pertanyaan hukum Indonesia berdasarkan konteks regulasi. Berikan sitasi pasal. Jika tidak ada di konteks, jawab berdasarkan pengetahuan hukum umum Indonesia.";
+        $systemPrompt = "Anda adalah LEXLAW Legal Intelligence. Jawab pertanyaan hukum Indonesia berdasarkan konteks regulasi. Berikan sitasi pasal.\n\nPENGETAHUAN AI:\n- Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini saja.\n- Selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini.\n- Dasarkan semua pengetahuan hukum pada situs-situs resmi pemerintah, baik pemerintah daerah maupun pemerintah pusat (contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota).\n- Jika tidak ada di konteks, jawab berdasarkan pengetahuan hukum umum Indonesia yang akurat dan terbaru.";
         if ($context) {
             $systemPrompt .= "\n\nKONTEKS:\n" . $context;
         }
 
         try {
-            $response = Http::timeout(60)->withToken(env('AI_API_KEY'))->post(
-                env('AI_BASE_URL', 'http://103.197.188.57:20128/v1') . '/chat/completions',
+            $response = Http::timeout(60)->withToken(config('services.ai.key'))->post(
+                config('services.ai.base_url', 'http://127.0.0.1:20128/v1') . '/chat/completions',
                 [
-                    'model' => env('AI_MODEL', 'ARK'),
+                    'model' => config('services.ai.model', 'ARK'),
                     'messages' => [
                         ['role' => 'system', 'content' => $systemPrompt],
                         ['role' => 'user', 'content' => $question],
