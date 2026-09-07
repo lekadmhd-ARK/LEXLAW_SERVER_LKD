@@ -7,61 +7,86 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class RegulationController extends Controller
 {
     public function index(Request $request)
     {
-        $tenantId = $request->user()->tenant_id;
+        // Data regulasi bersifat publik: semua pengguna melihat seluruh regulasi.
 
-        // 1. Jika ada query pencarian
+        // RAG: RETRIEVE hanya dari DB lokal (jangan minta AI mengarang data baru).
+        // Jika hasil kosong, tampilkan kosong — jangan fallback ke AI hallucination.
         $localResults = collect();
         if ($request->filled('q')) {
-            $q = $request->q;
-            $localResults = Regulation::where('tenant_id', $tenantId)->where(function($w) use ($q) {
-                $w->where('title', 'like', "%{$q}%")
-                  ->orWhere('number', 'like', "%{$q}%")
-                  ->orWhere('description', 'like', "%{$q}%")
-                  ->orWhere('short_description', 'like', "%{$q}%")
-                  ->orWhere('content_text', 'like', "%{$q}%");
-            })->get();
-        } else {
-            // Jika tidak ada pencarian, tampilkan semua dari DB
-            $localResults = Regulation::where('tenant_id', $tenantId)->latest()->get();
-        }
+            $q = trim($request->q);
+            $driver = \Illuminate\Support\Facades\DB::connection()->getDriverName();
 
-        // 2. Jika ada query 'q' dan lokal kosong, cari via 9Router gateway
-        $webSearchPerformed = false;
-        if ($request->filled('q') && $localResults->isEmpty()) {
-            $webSearchPerformed = true;
-            $webResults = $this->searchVia9Router($request->q);
-
-            // Simpan hasil 9Router ke DB
-            foreach ($webResults as $w) {
-                $exists = Regulation::where('tenant_id', $tenantId)
-                    ->where('title', $w['title'])
-                    ->where('number', $w['number'])
-                    ->where('year', $w['year'])
-                    ->exists();
-
-                if (!$exists) {
-                    Regulation::create(array_merge($w, [
-                        'tenant_id' => $tenantId,
-                        'company_id' => 1,
-                        'created_by' => 1,
-                        'is_active' => true,
-                    ]));
+            if ($driver === 'pgsql') {
+                try {
+                    // ponytail: 'simple' tanpa stemming Inggris; upgrade: embedding pgvector jika data >10k.
+                    $localResults = \Illuminate\Support\Facades\DB::select("
+                        SELECT r.*,
+                               ts_rank(
+                                   to_tsvector('simple', coalesce(r.title,'') || ' ' || coalesce(r.short_description,'') || ' ' || coalesce(r.content_text,'') || ' ' || coalesce(r.number,'')),
+                                   plainto_tsquery('simple', ?)
+                               ) AS rank
+                        FROM regulations r
+                        WHERE to_tsvector('simple', coalesce(r.title,'') || ' ' || coalesce(r.short_description,'') || ' ' || coalesce(r.content_text,'') || ' ' || coalesce(r.number,''))
+                              @@ plainto_tsquery('simple', ?)
+                        ORDER BY rank DESC, r.year DESC
+                        LIMIT 100
+                    ", [$q, $q]);
+                } catch (\Exception $e) {
+                    // fallback LIKE jika tsquery error (karakter aneh)
+                    $localResults = Regulation::where(function($w) use ($q) {
+                        $w->where('title', 'ilike', "%{$q}%")
+                          ->orWhere('number', 'ilike', "%{$q}%")
+                          ->orWhere('short_description', 'ilike', "%{$q}%")
+                          ->orWhere('content_text', 'ilike', "%{$q}%");
+                    })->limit(100)->get();
                 }
+                // DB::select menghasilkan array<stdClass> — hydrate ke Regulation Model agar accessor (hierarchy_label, sector_label) jalan
+                if (is_array($localResults) || ($localResults instanceof \Illuminate\Support\Collection && count($localResults) > 0 && !($localResults->first() instanceof Regulation))) {
+                    $items = collect($localResults)->map(fn($r) => (array)$r)->all();
+                    $localResults = Regulation::hydrate($items);
+                } else {
+                    $localResults = collect($localResults);
+                }
+            } elseif ($driver === 'mysql') {
+                try {
+                    $localResults = \Illuminate\Support\Facades\DB::select("
+                        SELECT r.* FROM regulations r
+                        WHERE (MATCH(r.title, r.short_description) AGAINST(? IN NATURAL LANGUAGE MODE) OR r.content_text LIKE ? OR r.title LIKE ?)
+                        LIMIT 100
+                    ", [$q, "%{$q}%", "%{$q}%"]);
+                    $localResults = collect($localResults);
+                } catch (\Exception $e) {
+                    $localResults = Regulation::where(function($w) use ($q) {
+                        $w->where('title', 'like', "%{$q}%")
+                          ->orWhere('number', 'like', "%{$q}%")
+                          ->orWhere('short_description', 'like', "%{$q}%")
+                          ->orWhere('content_text', 'like', "%{$q}%");
+                    })->limit(100)->get();
+                }
+            } else {
+                $localResults = Regulation::where(function($w) use ($q) {
+                    $w->where('title', 'like', "%{$q}%")
+                      ->orWhere('number', 'like', "%{$q}%")
+                      ->orWhere('short_description', 'like', "%{$q}%")
+                      ->orWhere('content_text', 'like', "%{$q}%");
+                })->limit(100)->get();
             }
-            // Fetch ulang dari DB agar semua berupa Model instance (bukan array)
-            $localResults = Regulation::where('tenant_id', $tenantId)->where(function($w2) use ($request) {
-                $w2->where('title', 'like', "%{$request->q}%")
-                   ->orWhere('short_description', 'like', "%{$request->q}%");
-            })->get();
+        } else {
+            $localResults = Regulation::latest()->get();
         }
 
-        // 3. Collection hanya berisi Model (semua dari DB) — tidak ada merge array mentah
+        // Tidak ada auto-insert dari AI di path pencarian. Data baru hanya via fetchFromJdihUrl
+        // yang menscrape HTML asli terlebih dahulu.
+        $webSearchPerformed = false;
+
+        // 3) Filter koleksi (hierarchy/sector/active) tetap di collection.
         $allResults = $localResults;
 
         // 4. Filter Hierarki
@@ -94,11 +119,11 @@ class RegulationController extends Controller
 
         // Header Stats
         $stats = [
-            'total' => Regulation::where('tenant_id', $tenantId)->count(),
-            'uu' => Regulation::where('tenant_id', $tenantId)->where('hierarchy_level', '1')->count(),
-            'pp' => Regulation::where('tenant_id', $tenantId)->where('hierarchy_level', '2')->count(),
-            'perpres' => Regulation::where('tenant_id', $tenantId)->where('hierarchy_level', '3')->count(),
-            'active' => Regulation::where('tenant_id', $tenantId)->where('is_active', true)->count(),
+            'total' => Regulation::count(),
+            'uu' => Regulation::where('hierarchy_level', '1')->count(),
+            'pp' => Regulation::where('hierarchy_level', '2')->count(),
+            'perpres' => Regulation::where('hierarchy_level', '3')->count(),
+            'active' => Regulation::where('is_active', true)->count(),
         ];
 
         return view('regulations.index', compact('regulations', 'stats', 'webSearchPerformed') + ['searchQuery' => $request->q ?? '']);
@@ -440,7 +465,7 @@ class RegulationController extends Controller
 
     public function create()
     {
-        $allRegs = Regulation::where('tenant_id', auth()->user()->tenant_id)->get();
+        $allRegs = Regulation::get();
         return view('regulations.create', compact('allRegs'));
     }
 
@@ -485,10 +510,6 @@ class RegulationController extends Controller
      */
     public function downloadPdf(Regulation $regulation)
     {
-        if ($regulation->tenant_id !== auth()->user()->tenant_id) {
-            abort(403);
-        }
-
         $html = view('regulations.pdf-preview', compact('regulation'))->render();
 
         $pdf = Pdf::loadHTML($html);
@@ -508,8 +529,7 @@ class RegulationController extends Controller
 
     public function edit(Regulation $regulation)
     {
-        $allRegs = Regulation::where('tenant_id', auth()->user()->tenant_id)
-            ->where('id', '!=', $regulation->id)->get();
+        $allRegs = Regulation::where('id', '!=', $regulation->id)->get();
         return view('regulations.edit', compact('regulation', 'allRegs'));
     }
 
@@ -544,4 +564,185 @@ class RegulationController extends Controller
         $regulation->delete();
         return redirect('/regulations')->with('success', 'Regulasi berhasil dihapus.');
     }
+
+    /**
+     * Fetch dari BPK Search - scrape HTML, extract metadata, simpan ke DB
+     */
+    public function searchAndFetchFromBpk(Request $request)
+    {
+        $request->validate(['q' => 'required|string|max:200']);
+        $query = trim($request->q);
+        $searchUrl = 'https://peraturan.bpk.go.id/Search?keywords=' . urlencode($query);
+
+        $html = $this->scrapeHtml($searchUrl);
+        if (empty($html)) {
+            return back()->with('error', 'Gagal mengakses portal BPK');
+        }
+
+        // extract detail links (dedupe, keep first 5)
+        $links = [];
+        preg_match_all('/href="\/Details\/(\d+)\/([^"]+)"/', $html, $m);
+        if (!empty($m[1])) {
+            $seen = [];
+            foreach ($m[1] as $i => $id) {
+                if (isset($seen[$id])) continue;
+                $seen[$id] = true;
+                $links[] = ['id' => $id, 'slug' => $m[2][$i]];
+                if (count($links) >= 5) break;
+            }
+        }
+
+        if (empty($links)) {
+            return back()->with('error', 'Tidak ditemukan hasil untuk: ' . $query);
+        }
+
+        $saved = 0;
+        $titles = [];
+
+        foreach ($links as $link) {
+            $detailUrl = 'https://peraturan.bpk.go.id/Details/' . $link['id'] . '/' . $link['slug'];
+            usleep(300000);
+            $detailHtml = $this->scrapeHtml($detailUrl);
+            if (empty($detailHtml)) continue;
+
+            $title = '';
+            if (preg_match('/<title[^>]*>\s*(.*?)\s*<\/title>/is', $detailHtml, $tm)) {
+                $title = trim(html_entity_decode($tm[1]));
+            }
+            if (empty($title)) $title = ucwords(str_replace('-', ' ', $link['slug']));
+
+            $pdfUrl = '';
+            if (preg_match('/href="(\/Download\/\d+\/[^"]+\.pdf)"/i', $detailHtml, $pm)) {
+                $pdfUrl = 'https://peraturan.bpk.go.id' . html_entity_decode($pm[1]);
+            }
+
+            $num = '';
+            $year = '';
+            if (preg_match('/\b(?:No\.?|Nomor)\s*(\d[\d\/A-Z.]*)\s+(?:Tahun\s+)?(\d{4})/i', $title, $nm)) {
+                $num = $nm[1];
+                $year = $nm[2];
+            } elseif (preg_match('/(\d+)\s+(?:Tahun\s+)?(\d{4})/i', $title, $nm)) {
+                $num = $nm[1];
+                $year = $nm[2];
+            }
+
+            $hl = 5;
+            $slug = strtolower($link['slug']);
+            if (str_starts_with($slug, 'uu-') || str_contains($title, 'Undang-Undang')) $hl = 1;
+            elseif (str_starts_with($slug, 'pp-') || str_contains($title, 'Peraturan Pemerintah')) $hl = 2;
+            elseif (str_starts_with($slug, 'perpres-') || str_contains($title, 'Peraturan Presiden')) $hl = 3;
+            elseif (str_contains($title, 'Peraturan Menteri') || str_contains($title, 'Keputusan Menteri')) $hl = 4;
+
+            $isActive = !str_contains(strtolower($title), 'dicabut') && !str_contains(strtolower($title), 'tidak berlaku');
+
+            $existing = \App\Models\Regulation::where('title', $title)->where('year', $year)->first();
+            if ($existing) {
+                if (empty($existing->pdf_url) && !empty($pdfUrl)) {
+                    $existing->update(['pdf_url' => $pdfUrl]);
+                }
+                $titles[] = $existing->title . ' (sudah ada)';
+                continue;
+            }
+
+            $user = $request->user();
+            $reg = \App\Models\Regulation::create([
+                'tenant_id' => $user->tenant_id,
+                'company_id' => $user->company_id,
+                'created_by' => $user->id,
+                'title' => $title,
+                'number' => $num ?: null,
+                'year' => $year ? (int)$year : null,
+                'hierarchy_level' => $hl,
+                'is_active' => $isActive,
+                'status' => 'active',
+                'source_url' => $detailUrl,
+                'pdf_url' => $pdfUrl ?: null,
+                'category_sector' => 'lainnya',
+            ]);
+
+            $this->parsePassages($reg);
+            $titles[] = $title;
+            $saved++;
+        }
+
+        $msg = $saved > 0
+            ? "Berhasil fetch dan simpan $saved regulasi: " . implode(', ', $titles)
+            : "Tidak ada regulasi baru. Hasil: " . implode(', ', $titles);
+
+        return redirect('/regulations')->with('success', $msg);
+    }
+
+    /**
+     * Parse content_text ke regulation_passages (RAG)
+     */
+    protected function parsePassages($regulation)
+    {
+        $text = trim($regulation->content_text ?? '');
+        if ($text === '') return;
+
+        $parts = preg_split('/\bPasal\s+/i', $text, -1, PREG_SPLIT_NO_EMPTY);
+        if (count($parts) <= 1) {
+            DB::table('regulation_passages')->updateOrInsert(
+                ['regulation_id' => $regulation->id, 'passage_number' => '1'],
+                ['tenant_id' => $regulation->tenant_id, 'passage_type' => 'pasal', 'passage_title' => 'Ketentuan Utuh',
+                 'content' => $text, 'hierarchy_path' => '1', 'created_at' => now(), 'updated_at' => now()]
+            );
+            return;
+        }
+        foreach ($parts as $idx => $p) {
+            $num = (string)($idx + 1);
+            $c = trim($p);
+            if (strlen($c) < 5) continue;
+            DB::table('regulation_passages')->updateOrInsert(
+                ['regulation_id' => $regulation->id, 'passage_number' => $num],
+                ['tenant_id' => $regulation->tenant_id, 'passage_type' => 'pasal', 'passage_title' => "Pasal $num",
+                 'content' => $c, 'hierarchy_path' => $num, 'created_at' => now(), 'updated_at' => now()]
+            );
+        }
+    }
+
+
+    /**
+     * Re-fetch data regulasi dari sumber aslinya (BPK/JDIH)
+     * Digunakan untuk mengupdate detail naskah dan metadata yang kurang lengkap.
+     */
+    public function refetchFromBpk(Regulation $regulation)
+    {
+        $url = $regulation->source_url;
+        if (!$url) {
+            return back()->with('error', 'URL sumber tidak tersedia untuk regulasi ini.');
+        }
+
+        // 1. Scrape HTML terbaru
+        $html = $this->scrapeHtml($url);
+        if (empty($html)) {
+            return back()->with('error', 'Gagal mengakses portal sumber (' . $url . ').');
+        }
+
+        // 2. Ekstrak metadata dasar (title, date, pdf, status)
+        $meta = $this->extractMetadataFromHtml($html, $url);
+
+        // 3. Ekstrak konten & abstraksi via AI (lebih akurat untuk naskah lengkap)
+        $text = $this->stripHtml($html);
+        $text = mb_substr($text, 0, 15000); // naikkan limit untuk detail lebih baik
+        $ai = $this->extractContentViaAi($text, $url);
+
+        // 4. Update regulasi
+        $regulation->update([
+            'short_description' => $ai['short_description'] ?? $meta['short_description'] ?? $regulation->short_description,
+            'content_text' => $ai['content_text'] ?? $regulation->content_text,
+            'category_sector' => $ai['category_sector'] ?? $meta['category_sector'] ?? $regulation->category_sector,
+            'is_active' => $ai['is_active'] ?? $meta['is_active'] ?? $regulation->is_active,
+            'pdf_url' => $meta['pdf_url'] ?? $regulation->pdf_url,
+            'penetapan_date' => $meta['penetapan_date'] ?? $regulation->penetapan_date,
+            'pengundangan_date' => $meta['pengundangan_date'] ?? $regulation->pengundangan_date,
+        ]);
+
+        // 5. Re-parse passages untuk RAG (hapus yang lama dulu)
+        DB::table('regulation_passages')->where('regulation_id', $regulation->id)->delete();
+        $this->parsePassages($regulation);
+
+        return back()->with('success', 'Detail regulasi berhasil diperbarui dari sumber resmi.');
+    }
+
 }

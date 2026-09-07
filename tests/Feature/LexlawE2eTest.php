@@ -234,31 +234,37 @@ class LexlawE2eTest extends TestCase
     }
 
     /** @test */
-    public function test_regulations_index_dan_pencarian()
+    public function test_regulations_publik_tanpa_login()
     {
-        $u = $this->user();
-        $resp = $this->actingAs($u)->get('/regulations');
+        // Data regulasi bersifat publik — guest (tanpa login) bisa akses index & pencarian
+        $this->assertGuest();
+        $resp = $this->get('/regulations');
         $resp->assertOk();
         $resp->assertSee('Regulasi');
 
-        // Cari dengan kata umum yang pasti ada di korpus DB
-        $search = $this->actingAs($u)->get('/regulations?q=pemeriksaan');
+        $search = $this->get('/regulations?q=pemeriksaan');
         $search->assertOk();
+
+        // Halaman CRUD lain tetap terlindungi auth
+        $this->get('/regulations/create')->assertRedirect('/login');
     }
 
     /** @test */
-    public function test_regulations_show_dan_pdf()
+    public function test_regulations_publik_show_dan_pdf()
     {
-        $u = $this->user();
-        $regulation = \App\Models\Regulation::withoutGlobalScopes()->where('tenant_id', $u->tenant_id)->first();
+        // Semua data regulasi terlihat lintas tenant
+        $total = \App\Models\Regulation::count();
+        $this->assertGreaterThanOrEqual(1, $total, 'Harus ada data regulasi publik.');
+        $regulation = \App\Models\Regulation::first();
         if (!$regulation) {
-            $this->markTestSkipped('Tidak ada data regulasi untuk tenant ini.');
+            $this->markTestSkipped('Tidak ada data regulasi.');
         }
 
-        $show = $this->actingAs($u)->get("/regulations/{$regulation->id}");
+        $this->assertGuest();
+        $show = $this->get("/regulations/{$regulation->id}");
         $show->assertOk();
 
-        $pdf = $this->actingAs($u)->get("/regulations/{$regulation->id}/pdf");
+        $pdf = $this->get("/regulations/{$regulation->id}/pdf");
         $this->assertTrue(in_array($pdf->getStatusCode(), [200, 302], true), 'PDF harus 200 atau redirect, got ' . $pdf->getStatusCode());
     }
 

@@ -43,6 +43,11 @@ Route::middleware('guest')->group(function () {
 
 Route::match(['get', 'post'], '/logout', [LogoutController::class, '__invoke'])->middleware('auth')->name('logout');
 
+// Public regulations — data regulasi bersifat publik (tanpa login)
+Route::get('regulations', [RegulationController::class, 'index'])->name('regulations.index');
+Route::get('regulations/{regulation}', [RegulationController::class, 'show'])->name('regulations.show')->where('regulation', '[0-9]+');
+Route::get('regulations/{regulation}/pdf', [RegulationController::class, 'downloadPdf'])->name('regulations.pdf')->where('regulation', '[0-9]+');
+
 // Authenticated
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, '__invoke'])->name('dashboard');
@@ -62,14 +67,17 @@ Route::middleware('auth')->group(function () {
     Route::post('/super-admin/companies/{company}/reject', [\App\Http\Controllers\SuperAdmin\CompanyController::class, 'reject'])->name('super-admin.companies.reject');
 
     // Core CRUD
-    Route::resource('regulations', RegulationController::class);
+    Route::get('regulations/create', [RegulationController::class, 'create'])->name('regulations.create');
+    Route::post('regulations', [RegulationController::class, 'store'])->name('regulations.store');
+    Route::get('regulations/{regulation}/edit', [RegulationController::class, 'edit'])->name('regulations.edit');
+    Route::put('regulations/{regulation}', [RegulationController::class, 'update'])->name('regulations.update');
+    Route::delete('regulations/{regulation}', [RegulationController::class, 'destroy'])->name('regulations.destroy');
     Route::post('regulations/search-fetch', [RegulationController::class, 'searchAndFetchFromBpk'])->name('regulations.search-fetch');
     Route::post('regulations/{regulation}/refetch', [RegulationController::class, 'refetchFromBpk'])->name('regulations.refetch');
     Route::get('decisions', [DecisionController::class, 'index'])->name('decisions');
     Route::get('decisions/courts', [DecisionController::class, 'getCourts'])->name('decisions.courts');
     Route::get('decisions/categories', [DecisionController::class, 'getCategories'])->name('decisions.categories');
     Route::get('decisions/fetch', [DecisionController::class, 'fetchDecisions'])->name('decisions.fetch');
-    Route::get('regulations/{regulation}/pdf', [RegulationController::class, 'downloadPdf'])->name('regulations.pdf');
     Route::post('regulations/fetch-jdih', [RegulationController::class, 'fetchFromJdihUrl'])->name('regulations.fetch-jdih')->middleware('throttle:30,1');
     Route::resource('regulation-contents', RegulationContentController::class)->only(['index', 'store', 'update']);
     Route::resource('legal-glossary', LegalGlossaryController::class);

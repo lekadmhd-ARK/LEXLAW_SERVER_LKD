@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Concerns\BelongsToTenant;
 use Laravel\Scout\Searchable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,7 +12,6 @@ class Regulation extends Model
 {
     use Searchable;
     use HasFactory;
-    use BelongsToTenant;
 
     protected $fillable = [
         'tenant_id', 'company_id', 'title', 'number', 'year', 'hierarchy_level',
