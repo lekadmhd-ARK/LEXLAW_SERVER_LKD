@@ -8,6 +8,8 @@ use App\Models\Plan;
 use App\Models\Company;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route;
+use App\Services\LegalSourceService;
 
 // Test non-destruktif: memakai data produksi yang ada, tidak mem-wipe DB.
 class LexlawE2eTest extends TestCase
@@ -406,5 +408,109 @@ class LexlawE2eTest extends TestCase
         $last = end($history);
         $this->assertSame('assistant', $last['role']);
         $this->assertStringContainsString('https://peraturan.bpk.go.id/Details/350055/', $last['content']);
+    }
+
+    /** @test */
+    public function test_semua_route_ai_menunjuk_ke_method_yang_nyata()
+    {
+        // Route AI yang menunjuk ke method TIDAK ADA di controller = "salah jalur".
+        $broken = [];
+        foreach (Route::getRoutes() as $r) {
+            $uri = $r->uri();
+            if (!str_contains($uri, 'ai/')) {
+                continue;
+            }
+            $actionName = $r->getActionName();
+            if (!is_string($actionName) || !str_contains($actionName, 'Controller@')) {
+                continue;
+            }
+            $parts = explode('@', $actionName);
+            $method = array_pop($parts);
+            $class = implode('@', $parts);
+            if (!method_exists($class, $method)) {
+                $broken[] = $r->methods()[0] . ' ' . $uri . ' -> ' . $class . '@' . $method;
+            }
+        }
+        $this->assertSame([], $broken, 'Route AI mengarah ke method yang tak ada: ' . implode('; ', $broken));
+    }
+
+    /** @test */
+    public function test_flow_ai_draft_dan_validity_mock_ai()
+    {
+        $u = $this->user();
+        if (!$u) {
+            $this->markTestSkipped('Tidak ada user admin.');
+        }
+
+        $faker = app(LegalSourceService::class);
+        $this->app->instance(LegalSourceService::class, \Mockery::mock(LegalSourceService::class)
+            ->shouldReceive('getContext')->andReturn(['context' => 'sumber resmi', 'sources' => []])
+            ->shouldReceive('search')->andReturn([])
+            ->getMock());
+        // keep original for later tests? no — restore after is complex; fine for this test.
+
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), 'chat/completions')) {
+                return Http::response([
+                    'choices' => [['message' => [
+                        'content' => "Pasal 1: Definisi. Sumber: https://peraturan.bpk.go.id/Details/1/x",
+                    ]]],
+                ], 200);
+            }
+            return Http::response('', 200);
+        });
+
+        // Flow Draft DOCX: form GET → submit POST → render hasil
+        $resp = $this->actingAs($u)->get('/ai/draft');
+        $resp->assertOk();
+
+        $resp = $this->actingAs($u)->post('/ai/draft', [
+            'document_type' => 'surat_perjanjian',
+            'instructions' => 'Buat draf perjanjian sewa menyewa',
+            'variant_count' => '1',
+        ]);
+        $resp->assertOk();
+        $this->assertStringContainsString('Pasal 1', $resp->getContent());
+
+        // Flow Validity Checker: form GET → submit POST → hasil
+        $resp = $this->actingAs($u)->get('/ai/validity');
+        $resp->assertOk();
+
+        $resp = $this->actingAs($u)->post('/ai/validity', [
+            'text' => "Berdasarkan Pasal 57 UU No. 13 Tahun 2003 tentang Ketenagakerjaan dan Undang-Undang Nomor 1 Tahun 1974",
+        ]);
+        $resp->assertOk();
+    }
+
+    /** @test */
+    public function test_flow_ai_contract_review_mock_ai()
+    {
+        $u = $this->user();
+        if (!$u) {
+            $this->markTestSkipped('Tidak ada user admin.');
+        }
+
+        Http::fake(function ($request) {
+            if (str_contains($request->url(), 'chat/completions')) {
+                return Http::response([
+                    'choices' => [['message' => [
+                        'content' => "## Ringkasan Kontrak\nKontrak sewa. Sumber: https://peraturan.bpk.go.id/Details/1/x",
+                    ]]],
+                ], 200);
+            }
+            return Http::response('', 200);
+        });
+
+        $resp = $this->actingAs($u)->get('/ai/contract-review');
+        $resp->assertOk();
+
+        $text = str_repeat('Kontrak sewa menyewa antara PT A dan PT B untuk jangka waktu 3 tahun dengan nilai Rp 1 miliar. ', 5);
+        $resp = $this->actingAs($u)->post('/ai/contract-review', [
+            'contract_text' => $text,
+        ]);
+        $resp->assertOk();
+        $body = $resp->json();
+        $this->assertSame(true, $body['success'] ?? false);
+        $this->assertStringContainsString('## Ringkasan Kontrak', $body['answer'] ?? '');
     }
 }
