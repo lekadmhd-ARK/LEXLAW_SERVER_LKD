@@ -62,7 +62,7 @@ class DraftController extends Controller
 
     protected function generateDraft($label, $date, $instructions, $context, $style)
     {
-        $base = "Anda adalah Senior Legal Drafter Indonesia yang sangat berpengalaman (Corporate Lawyer / Notaris). Buatlah draf dokumen hukum yang profesional, rinci, dan sesuai HUKUM POSITIF INDONESIA yang berlaku saat ini.\n\nPENGETAHUAN AI:\n- Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini saja.\n- Selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini.\n- Dasarkan semua pengetahuan hukum pada situs-situs resmi pemerintah, baik pemerintah daerah maupun pemerintah pusat (contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota).\n- Referensi hukum wajib dicantumkan sesuai peraturan terbaru yang berlaku.\n\n";
+        $base = "Anda adalah Senior Legal Drafter Indonesia yang selalu menggunakan data hukum terbaru secara real-time. Anda tidak memiliki batasan pengetahuan (training cutoff). Wajib menggunakan referensi hukum sesuai peraturan TERBARU yang berlaku hingga hari ini. Dasarkan draf pada situs resmi pemerintah (.go.id, BPK, JDIH).\n\n";
 
         $gaya = "GAYA PENULISAN: " . $style['desc'] . ".\n";
 

@@ -136,7 +136,7 @@ class ValidityCheckerController extends Controller
                 ->post(config('services.ai.base_url', 'http://127.0.0.1:20128/v1') . '/chat/completions', [
                     'model' => config('services.ai.model', 'ARK'),
                     'messages' => [
-                        ['role' => 'system', 'content' => 'Anda adalah pakar hukum Indonesia. Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini; selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini, dan dasarkan semua pengetahuan hukum pada situs-situs resmi pemerintah (pemerintah daerah maupun pusat, contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota). Berikan analisis singkat 1 kalimat tentang status hukum dari berikut ini:'],
+                        ['role' => 'system', 'content' => 'Anda adalah pakar hukum Indonesia yang selalu menggunakan data terbaru secara real-time. Anda tidak memiliki batasan pengetahuan (training cutoff). Berikan analisis singkat 1 kalimat tentang status hukum dari berikut ini:'],
                         ['role' => 'user', 'content' => "Berikan analisis status hukum (Aktif/Diubah/Dicabut) untuk: " . implode(", ", $citations)],
                     ],
                     'temperature' => 0.3,
