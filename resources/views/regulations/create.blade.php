@@ -28,7 +28,8 @@
             <div id="fetch-status" style="margin-top:10px;font-size:12px;color:var(--text-muted);display:none"></div>
         </div>
 
-        <form method="POST" action="/regulations" class="card" style="padding:24px">
+        <div style="padding:12px 16px;border-radius:8px;background:#3b82f620;color:#3b82f6;border:1px solid #3b82f640;margin-bottom:16px;font-size:12px">Info: Field Abstraksi, Isi Peraturan, URL Sumber, PDF Resmi, Tanggal, dan Sektor hanya diisi otomatis melalui proses Fetch Data dari situs resmi JDIH/BPK dan tidak dapat diedit manual.</div>
+<form method="POST" action="/regulations" class="card" style="padding:24px">
             @csrf
 
             <div style="margin-bottom:16px">
@@ -57,10 +58,10 @@
                 </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:start;margin-bottom:16px">
                 <div>
                     <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Kategori Sektor</label>
-                    <select name="category_sector" id="f-sector" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
+                    <select name="category_sector" id="f-sector" disabled style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
                         <option value="">— Pilih —</option>
                         <option value="ketenagakerjaan">Ketenagakerjaan</option>
                         <option value="perpajakan">Perpajakan</option>
@@ -79,22 +80,28 @@
                         <option value="revoked">Dicabut</option>
                     </select>
                 </div>
+                <div style="padding-top:28px">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
+                        <input type="checkbox" name="is_active" id="f-active" value="1" checked>
+                        <span style="font-size:13px;font-weight:500;color:var(--text)">✓ Masih Berlaku</span>
+                    </label>
+                </div>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
                 <div>
                     <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Tanggal Penetapan</label>
-                    <input type="date" name="penetapan_date" id="f-penetapan" class="form-input" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
+                    <input type="date" name="penetapan_date" id="f-penetapan" readonly class="form-input" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
                 </div>
                 <div>
                     <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Tanggal Pengundangan</label>
-                    <input type="date" name="pengundangan_date" id="f-pengundangan" class="form-input" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
+                    <input type="date" name="pengundangan_date" id="f-pengundangan" readonly class="form-input" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
                 </div>
             </div>
 
             <div style="margin-bottom:16px">
                 <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Abstraksi / Ringkasan</label>
-                <textarea name="short_description" id="f-short" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px"></textarea>
+                <textarea name="short_description" id="f-short" rows="3" readonly style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px"></textarea>
             </div>
 
             <div style="margin-bottom:16px">
@@ -104,24 +111,17 @@
 
             <div style="margin-bottom:16px">
                 <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">URL Sumber (Lembaran Negara / JDIH / BPK)</label>
-                <input type="url" name="source_url" id="f-source" class="form-input" placeholder="https://jdih.tangerangkab.go.id/dokumen/detail/..." style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
+                <input type="url" name="source_url" id="f-source" readonly class="form-input" placeholder="https://jdih.tangerangkab.go.id/dokumen/detail/..." style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
             </div>
 
             <div style="margin-bottom:16px">
                 <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">URL PDF Resmi (opsional)</label>
-                <input type="url" name="pdf_url" id="f-pdf" class="form-input" placeholder="https://jdih.example.go.id/files/regulation.pdf" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
+                <input type="url" name="pdf_url" id="f-pdf" readonly class="form-input" placeholder="https://jdih.example.go.id/files/regulation.pdf" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
             </div>
 
             <div style="margin-bottom:16px">
                 <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Isi Peraturan (Lengkap)</label>
-                <textarea name="content_text" id="f-content" rows="12" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:Georgia,serif"></textarea>
-            </div>
-
-            <div style="margin-bottom:16px">
-                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                    <input type="checkbox" name="is_active" id="f-active" value="1" checked>
-                    <span style="font-size:13px;color:var(--text)">Peraturan masih berlaku</span>
-                </label>
+                <textarea name="content_text" id="f-content" rows="12" readonly style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg2);color:var(--muted);font-size:13px;font-family:Georgia,serif;cursor:not-allowed"></textarea>
             </div>
 
             <div style="display:flex;gap:12px;justify-content:flex-end">
@@ -171,7 +171,20 @@
                 if (d.content_text) document.getElementById('f-content').value = d.content_text;
                 if (d.source_url) document.getElementById('f-source').value = d.source_url;
                 if (d.pdf_url) document.getElementById('f-pdf').value = d.pdf_url;
+                                if (d.pdf_url) document.getElementById('f-pdf').value = d.pdf_url;
                 if (d.is_active !== undefined) document.getElementById('f-active').checked = d.is_active;
+
+                // Make fetch-based fields readonly once filled
+                const readOnlyIds = ['f-short', 'f-content', 'f-source', 'f-pdf', 'f-penetapan', 'f-pengundangan', 'f-sector'];
+                readOnlyIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) {
+                        el.readOnly = true;
+                        el.style.background = 'var(--bg2)';
+                        el.style.opacity = '0.7';
+                        if(el.tagName === 'SELECT') el.disabled = true;
+                    }
+                });
 
                 status.style.color = '#22c55e';
                 status.textContent = '✓ Data berhasil diekstrak. Silakan review dan klik Simpan.';

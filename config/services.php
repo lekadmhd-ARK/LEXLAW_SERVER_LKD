@@ -38,7 +38,8 @@ return [
     'ai' => [
         'base_url' => env('AI_BASE_URL', 'http://127.0.0.1:20128/v1'),
         'key'      => env('AI_API_KEY'),
-        'model'    => env('AI_MODEL', 'gas'),
+        'api_key'  => env('AI_API_KEY'),
+        'model'    => env('AI_MODEL', 'ARK'),
     ],
 
 ];

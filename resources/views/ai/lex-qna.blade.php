@@ -1,6 +1,6 @@
 <x-layouts.base title="AI Lex Q&A">
     <div>
-        <div class="page-head">
+        <div class="cr-hero"><div class="page-head">
             <div>
                 <div class="eyebrow">✦ AI Lex Q&A</div>
                 <h1 class="page-title">Legal Q&A Assistant</h1>
@@ -14,6 +14,7 @@
                 <a href="/dashboard" class="btn btn-secondary">← Kembali</a>
             </div>
         </div>
+       </div>
 
         <div class="card" style="padding:0;height:600px;display:flex;flex-direction:column">
             <div id="chatContainer" style="flex:1;overflow-y:auto;padding:20px">
@@ -120,4 +121,15 @@
             }
         });
     </script>
+    <style>
+    .cr-hero{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;padding:24px;background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);border-radius:var(--radius);color:#fff;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);box-shadow:0 8px 30px -10px var(--accent)}
+    .cr-hero .page-head{flex:1;display:block;margin:0;padding:0;border:0;background:transparent}
+    .cr-hero .eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.2);margin-bottom:8px;color:#fff}
+    .cr-hero .page-title{margin:0 0 4px;font-size:28px;font-weight:700;letter-spacing:-.5px;color:#fff}
+    .cr-hero .page-desc{margin:0;font-size:14px;opacity:.9;line-height:1.5;color:#fff}
+    .cr-hero .btn-secondary{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;margin-top:12px}
+    .cr-hero .btn-secondary:hover{background:rgba(255,255,255,.25)}
+    .cr-hero .btn-primary{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;margin-top:12px}
+    .cr-hero .btn-primary:hover{background:rgba(255,255,255,.3)}
+    </style>
 </x-layouts.base>

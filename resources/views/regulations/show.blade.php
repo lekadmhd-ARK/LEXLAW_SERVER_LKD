@@ -8,13 +8,15 @@
                 <p class="page-desc">{{ $regulation->hierarchy_label }} • Sektor: {{ $regulation->sector_label }} • Tahun {{ $regulation->year }}</p>
             </div>
             <div style="display:flex;gap:8px">
-                <a href="/regulations/{{ $regulation->id }}/edit" class="btn btn-secondary">✏️ Edit</a>
-                <form action="/regulations/{{ $regulation->id }}" method="POST" onsubmit="return confirm('Hapus regulasi ini?')">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="btn btn-secondary" style="color:var(--error);border-color:var(--error)">🗑️ Hapus</button>
+                <form method="POST" action="{{ route("regulations.refetch", $regulation) }}" style="margin:0" onsubmit="return confirm('Ambil ulang data dari sumber resmi? Proses ini akan memakan waktu beberapa detik.');">
+                    @csrf
+                    <button type="submit" class="btn btn-secondary" style="padding:8px 16px">🔄 Re-Fetch (Update Detail)</button>
                 </form>
             </div>
         </div>
+                    @csrf
+                    <button type="submit" class="btn btn-secondary" style="padding:8px 16px">🔄 Re-Fetch (Update Detail)</button>
+                </form>
 
         {{-- METADATA CARD --}}
         <div class="card" style="margin-bottom:16px">
@@ -121,7 +123,7 @@
             <div style="font-family:Georgia,serif;font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text)">{{ $regulation->content_text }}</div>
             @else
             <div style="padding:32px;text-align:center;color:var(--text-muted)">
-                Naskah lengkap belum diinput. Anda dapat mengunduh dokumen resmi melalui tombol di atas atau mengedit via form.
+                Naskah lengkap belum dapat diproses otomatis. Dokumen resmi dapat diunduh melalui portal JDIH/BPK (lihat tautan PDF di atas).
             </div>
             @endif
         </div>

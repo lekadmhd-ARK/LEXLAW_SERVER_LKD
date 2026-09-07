@@ -1,6 +1,6 @@
 <x-layouts.base title="Regulasi">
     <div>
-        <div class="page-head">
+        <div class="cr-hero"><div class="page-head">
             <div>
                 <div class="eyebrow">⚖️ Manajemen Regulasi</div>
                 <h1 class="page-title">Peraturan Perundang-undangan</h1>
@@ -8,48 +8,46 @@
             </div>
             <a href="/regulations/create" class="btn btn-primary">+ Tambah Regulasi</a>
         </div>
+       </div>
 
         {{-- Sumber Data & Hak Cipta --}}
-        <div class="card" style="padding:16px;margin-bottom:16px">
-            <div style="font-size:12px;font-weight:600;color:var(--accent);text-transform:uppercase;margin-bottom:8px">📖 Sumber Data & Hak Cipta</div>
-            <div style="font-size:12px;line-height:1.6;color:var(--muted)">
-                <p style="margin-bottom:6px"><strong>Sumber Data Utama</strong> — Data regulasi bersumber langsung dari dokumen resmi milik pemerintah Indonesia (Lembaran Negara, Direktori Hukum Kementerian, JDIH Nasional). Dokumen publik resmi ini tidak dilindungi oleh hak cipta.</p>
-                <p style="margin-bottom:6px"><strong>Hak Cipta Peraturan</strong> — Peraturan perundang-undangan Indonesia bersifat public domain — sah secara hukum untuk disalin, disebarluaskan, dan dimasukkan ke dalam database aplikasi.</p>
-                <p style="margin-bottom:6px"><strong>Cara Pengumpulan Data</strong> — Manual (download PDF resmi) atau otomatis (crawler ke portal JDIH/situs kementerian).</p>
-                <p><strong>Tanggung Jawab Pengembang</strong> — Aplikasi ini adalah penyedia mesin pengindeks dan kurator, bukan pembuat aturan.</p>
+                {{-- Search & Fetch Card (BPK Scraper) --}}
+        <div class="card" style="padding:16px;margin-bottom:16px;border-left:4px solid var(--accent)">
+            <form method="POST" action="/regulations/search-fetch" style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
+                @csrf
+                <div>
+                    <label class="label" style="font-size:12px;font-weight:600">Pencarian & Fetch Regulasi Resmi (JDIH BPK)</label>
+                    <input type="text" name="q" required value="{{ request('q') }}" placeholder="Ketik kata kunci/nomor/judul regulasi (contoh: UU 12 2011, PP 26 2011, Cipta Kerja)..." style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)">
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary" style="white-space:nowrap;padding:10px 16px">
+                        📥 Ambil Data Resmi (Fetch)
+                    </button>
+                </div>
+            </form>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px">
+                Data diambil langsung dari portal resmi JDIH BPK beserta link dokumen PDF asli dan dimasukkan otomatis ke database.
             </div>
         </div>
 
-        {{-- Statistik --}}
-        <div class="grid-4" style="margin-bottom:16px">
-            <div class="card stat"><div class="num">{{ $stats['total'] }}</div><div class="label">Total</div></div>
-            <div class="card stat"><div class="num">{{ $stats['uu'] }}</div><div class="label">UU</div></div>
-            <div class="card stat"><div class="num">{{ $stats['pp'] }}</div><div class="label">PP</div></div>
-            <div class="card stat"><div class="num">{{ $stats['perpres'] }}</div><div class="label">Perpres</div></div>
-        </div>
-
-        {{-- Filter --}}
+        {{-- Filter Data Lokal Card --}}
         <div class="card" style="padding:16px;margin-bottom:16px">
-            <form method="GET" action="/regulations" id="filterForm" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:12px;align-items:end">
+            <form method="GET" action="/regulations" id="filterForm" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
                 <div>
-                    <label class="label" style="font-size:12px">Pencarian</label>
-                    <input type="text" name="q" id="globalSearch" value="{{ request('q') }}" placeholder="Cari judul/nomor/deskripsi..." style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)">
-                </div>
-                <div>
-                    <label class="label" style="font-size:12px">Hierarki</label>
+                    <label class="label" style="font-size:12px">Filter Hierarki</label>
                     <select name="hierarchy" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)">
-                        <option value="">Semua</option>
-                        <option value="1" {{ request('hierarchy')=='1'?'selected':'' }}>UU</option>
-                        <option value="2" {{ request('hierarchy')=='2'?'selected':'' }}>PP</option>
-                        <option value="3" {{ request('hierarchy')=='3'?'selected':'' }}>Perpres</option>
-                        <option value="4" {{ request('hierarchy')=='4'?'selected':'' }}>PerMen</option>
-                        <option value="5" {{ request('hierarchy')=='5'?'selected':'' }}>Perda</option>
+                        <option value="">Semua Hierarki</option>
+                        <option value="1" {{ request('hierarchy')=='1'?'selected':'' }}>UU (Undang-Undang)</option>
+                        <option value="2" {{ request('hierarchy')=='2'?'selected':'' }}>PP (Peraturan Pemerintah)</option>
+                        <option value="3" {{ request('hierarchy')=='3'?'selected':'' }}>Perpres (Peraturan Presiden)</option>
+                        <option value="4" {{ request('hierarchy')=='4'?'selected':'' }}>PerMen (Peraturan Menteri)</option>
+                        <option value="5" {{ request('hierarchy')=='5'?'selected':'' }}>Perda (Peraturan Daerah)</option>
                     </select>
                 </div>
                 <div>
-                    <label class="label" style="font-size:12px">Sektor</label>
+                    <label class="label" style="font-size:12px">Filter Sektor</label>
                     <select name="sector" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)">
-                        <option value="">Semua</option>
+                        <option value="">Semua Sektor</option>
                         <option value="ketenagakerjaan" {{ request('sector')=='ketenagakerjaan'?'selected':'' }}>Ketenagakerjaan</option>
                         <option value="perpajakan" {{ request('sector')=='perpajakan'?'selected':'' }}>Perpajakan</option>
                         <option value="perusahaan" {{ request('sector')=='perusahaan'?'selected':'' }}>Perusahaan</option>
@@ -59,21 +57,20 @@
                     </select>
                 </div>
                 <div>
-                    <label class="label" style="font-size:12px">Status</label>
+                    <label class="label" style="font-size:12px">Filter Status</label>
                     <select name="active" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)">
-                        <option value="">Semua</option>
-                        <option value="1" {{ request('active')=='1'?'selected':'' }}>Aktif</option>
-                        <option value="0" {{ request('active')=='0'?'selected':'' }}>Tidak Aktif</option>
+                        <option value="">Semua Status</option>
+                        <option value="1" {{ request('active')=='1'?'selected':'' }}>Aktif / Berlaku</option>
+                        <option value="0" {{ request('active')=='0'?'selected':'' }}>Dicabut / Tidak Berlaku</option>
                     </select>
                 </div>
                 <div style="display:flex;gap:8px">
-                    <button type="submit" class="btn btn-primary">🔍 Filter</button>
-                    <a href="/regulations" class="btn btn-secondary">Reset</a>
+                    <button type="submit" class="btn btn-secondary" style="padding:10px 14px">🔍 Filter Lokal</button>
+                    <a href="/regulations" class="btn btn-secondary" style="padding:10px 14px">Reset</a>
                 </div>
             </form>
         </div>
 
-        {{-- DataTables --}}
         <div class="card">
             <table id="regulationsTable" class="display" style="width:100%">
                 <thead>
@@ -105,7 +102,6 @@
                         <td><span style="padding:2px 8px;border-radius:99px;font-size:11px;background:{{ $r->is_active ? '#22c55e20' : '#ef444420' }};color:{{ $r->is_active ? '#22c55e' : '#ef4444' }}">{{ $r->is_active ? 'Aktif' : 'Tidak Aktif' }}</span></td>
                         <td style="text-align:right">
                             <a href="/regulations/{{ $r->id }}" class="btn btn-secondary" style="padding:4px 10px;font-size:12px">Detail</a>
-                            <a href="/regulations/{{ $r->id }}/edit" class="btn btn-secondary" style="padding:4px 10px;font-size:12px;margin-left:4px">Edit</a>
                         </td>
                     </tr>
                 @empty
@@ -126,6 +122,17 @@
     </div>
 
     @push('scripts')
+    <style>
+    .cr-hero{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;padding:24px;background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);border-radius:var(--radius);color:#fff;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);box-shadow:0 8px 30px -10px var(--accent)}
+    .cr-hero .page-head{flex:1;display:block;margin:0;padding:0;border:0;background:transparent}
+    .cr-hero .eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.2);margin-bottom:8px;color:#fff}
+    .cr-hero .page-title{margin:0 0 4px;font-size:28px;font-weight:700;letter-spacing:-.5px;color:#fff}
+    .cr-hero .page-desc{margin:0;font-size:14px;opacity:.9;line-height:1.5;color:#fff}
+    .cr-hero .btn-secondary{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;margin-top:12px}
+    .cr-hero .btn-secondary:hover{background:rgba(255,255,255,.25)}
+    .cr-hero .btn-primary{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;margin-top:12px}
+    .cr-hero .btn-primary:hover{background:rgba(255,255,255,.3)}
+    </style>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>

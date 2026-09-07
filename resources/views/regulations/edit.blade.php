@@ -58,7 +58,7 @@
                 </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:start;margin-bottom:16px">
                 <div>
                     <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Kategori Sektor</label>
                     <select name="category_sector" id="f-sector" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px">
@@ -79,6 +79,12 @@
                         <option value="archived" {{ old('status', $regulation->status)=='archived'?'selected':'' }}>Diarsipkan</option>
                         <option value="revoked" {{ old('status', $regulation->status)=='revoked'?'selected':'' }}>Dicabut</option>
                     </select>
+                </div>
+                <div style="padding-top:28px">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
+                        <input type="checkbox" name="is_active" id="f-active" value="1" {{ old('is_active', $regulation->is_active) ? 'checked' : '' }}>
+                        <span style="font-size:13px;font-weight:500;color:var(--text)">✓ Masih Berlaku</span>
+                    </label>
                 </div>
             </div>
 
@@ -111,13 +117,6 @@
             <div style="margin-bottom:16px">
                 <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:6px">Isi Peraturan (Lengkap)</label>
                 <textarea name="content_text" id="f-content" rows="12" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px;font-family:Georgia,serif">{{ old('content_text', $regulation->content_text) }}</textarea>
-            </div>
-
-            <div style="margin-bottom:16px">
-                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-                    <input type="checkbox" name="is_active" id="f-active" value="1" {{ old('is_active', $regulation->is_active) ? 'checked' : '' }}>
-                    <span style="font-size:13px;color:var(--text)">Peraturan masih berlaku</span>
-                </label>
             </div>
 
             <div style="display:flex;gap:12px;justify-content:flex-end">

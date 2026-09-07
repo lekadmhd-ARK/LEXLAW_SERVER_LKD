@@ -1,51 +1,69 @@
 <x-layouts.base title="Billing - LEXLAW v2">
-    <div class="page-head">
-        <div>
-            <div class="eyebrow">Subscription</div>
-            <h1 class="page-title">Billing & QRIS</h1>
-            <p class="page-desc">Midtrans sedang diproses. Flow sementara memakai QRIS perusahaan + upload bukti pembayaran.</p>
-        </div>
-    </div>
+<div class="page-head">
+  <div>
+    <div class="eyebrow">Subscription</div>
+    <h1 class="page-title">Billing & Pembayaran</h1>
+    <p class="page-desc">Kelola langganan LAWLEX v2. Pilih paket, bayar via QRIS DANA, upload bukti, admin approve.</p>
+  </div>
+</div>
 
-    @if(session('success'))
-    <div class="alert" style="padding:12px 16px;border-radius:8px;background:#22c55e20;color:#22c55e;border:1px solid #22c55e40;margin-bottom:16px">{{ session('success') }}</div>
+@if(session('success'))
+<div style="padding:12px 16px;border-radius:8px;background:#22c55e20;color:#22c55e;border:1px solid #22c55e40;margin-bottom:16px">{{ session('success') }}</div>
+@endif
+@if($errors->any())
+<div style="padding:12px 16px;border-radius:8px;background:#ef444420;color:#ef4444;border:1px solid #ef444440;margin-bottom:16px">{{ $errors->first() }}</div>
+@endif
+
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px">
+  <div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px">
+    <span style="padding:2px 10px;border-radius:99px;font-size:11px;background:var(--accent-bg);color:var(--accent);font-weight:600">Status Saat Ini</span>
+    <h2 style="margin-top:12px;font-size:22px;font-weight:700">
+      @if($company->subscription_status === 'active')
+        <span style="color:#22c55e">Active</span>
+      @elseif($company->subscription_status === 'trialing')
+        <span style="color:#eab308">Trialing</span>
+      @else
+        <span style="color:var(--muted)">{{ $company->subscription_status }}</span>
+      @endif
+    </h2>
+    <p style="color:var(--muted);margin-top:4px;font-size:13px">{{ $company->name }}</p>
+    @if($company->subscribed_until)
+      <p style="color:var(--muted);margin-top:8px;font-size:12px">Berlaku hingga: {{ $company->subscribed_until->format('d M Y') }}</p>
     @endif
-    @if($errors->any())
-    <div class="alert" style="padding:12px 16px;border-radius:8px;background:#ef444420;color:#ef4444;border:1px solid #ef444440;margin-bottom:16px">{{ $errors->first() }}</div>
-    @endif
 
-    <div class="grid-4" style="grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px;">
-        <div class="card">
-            <span style="padding:2px 8px;border-radius:99px;font-size:11px;background:var(--accent-bg);color:var(--accent)">Current Plan</span>
-            <h2 style="margin-top:12px;font-size:20px">{{ $company->subscription_status ?? 'trial' }}</h2>
-            <p style="color:var(--text-muted);margin-top:4px">{{ $company->name ?? 'Company not set' }}</p>
-            <form method="POST" action="/billing/subscribe" style="margin-top:20px">
-                @csrf
-                <div style="margin-bottom:12px">
-                    <label class="label">Pilih Paket</label>
-                    <select name="plan_id" required class="select" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)">
-                        @foreach(\App\Models\Plan::all() as $plan)
-                        <option value="{{ $plan->id }}">{{ $plan->name }} — Rp{{ number_format($plan->price_monthly) }}/bulan</option>
-                        @endforeach
-                    </select>
-                </div>
-                <button class="btn btn-primary" type="submit">Generate QRIS Order</button>
-            </form>
-        </div>
-
-        <div class="card">
-            <span style="padding:2px 8px;border-radius:99px;font-size:11px;background:var(--accent-bg);color:var(--accent)">Manual Payment</span>
-            <h2 style="margin-top:12px;font-size:20px">QRIS Perusahaan</h2>
-            <p style="color:var(--text-muted);margin-top:4px">Scan QRIS, lalu upload bukti pembayaran.</p>
-            <img src="/qris/qris_ark.jpeg" alt="QRIS" style="width:100%;max-width:320px;margin:18px 0;border:1px solid var(--line);border-radius:14px;background:white">
-            <form method="POST" action="/payment/upload-qris" enctype="multipart/form-data" style="margin-top:16px">
-                @csrf
-                <div style="margin-bottom:12px">
-                    <label class="label">Bukti Transfer</label>
-                    <input type="file" name="proof" accept="image/*" required style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)">
-                </div>
-                <button class="btn btn-primary" type="submit">Upload Proof</button>
-            </form>
-        </div>
+    @if($company->subscription_status !== 'active')
+    <form method="POST" action="/billing/subscribe" style="margin-top:20px">
+      @csrf
+      <div style="margin-bottom:12px">
+        <label style="font-size:13px;font-weight:600;color:var(--muted);display:block;margin-bottom:6px">Pilih Paket</label>
+        <select name="plan_id" required style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:13px">
+          @foreach(\App\Models\Plan::all() as $plan)
+            <option value="{{ $plan->id }}">{{ $plan->name }} — Rp{{ number_format($plan->price_monthly) }}/bulan</option>
+          @endforeach
+        </select>
+      </div>
+      <button type="submit" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer">
+        Pilih Paket & Bayar
+      </button>
+    </form>
+    @else
+    <div style="margin-top:20px;padding:12px;border-radius:8px;background:#22c55e10;border:1px solid #22c55e30;font-size:13px;color:#22c55e">
+      Langganan aktif. Fitur lengkap tersedia.
     </div>
+    @endif
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:20px">
+    <span style="padding:2px 10px;border-radius:99px;font-size:11px;background:var(--accent-bg);color:var(--accent);font-weight:600">Cara Bayar</span>
+    <div style="margin-top:16px;font-size:13px;color:var(--muted);line-height:1.7">
+      <p><strong style="color:var(--text)">1.</strong> Pilih paket langganan di panel kiri</p>
+      <p><strong style="color:var(--text)">2.</strong> Pindai QRIS DANA yang muncul</p>
+      <p><strong style="color:var(--text)">3.</strong> Upload screenshot bukti pembayaran</p>
+      <p><strong style="color:var(--text)">4.</strong> Admin akan approve dalam 1x24 jam</p>
+    </div>
+    <div style="margin-top:20px;padding:12px;border-radius:8px;background:var(--bg);border:1px solid var(--line);font-size:12px;color:var(--muted)">
+      <a href="https://wa.me/6281297414115" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:#22c55e;font-weight:600">Butuh bantuan? Chat WhatsApp Admin &rarr</a>
+    </div>
+  </div>
+</div>
 </x-layouts.base>

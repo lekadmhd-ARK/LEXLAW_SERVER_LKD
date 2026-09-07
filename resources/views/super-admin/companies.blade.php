@@ -1,0 +1,93 @@
+<x-layouts.base title="Approve Companies - LEXLAW v2">
+
+<div class="page-head">
+  <div>
+    <div class="eyebrow">Super Admin</div>
+    <h1 class="page-title">Approve Perusahaan</h1>
+    <p class="page-desc">Review & approve perusahaan yang sudah bayar. QRIS upload bukti = trialing &rarr; active.</p>
+  </div>
+  <a href="/super-admin/plans" class="btn btn-secondary">&larr; Plans</a>
+</div>
+
+@if(session('success'))
+<div style="padding:12px 16px;border-radius:8px;background:#22c55e20;color:#22c55e;border:1px solid #22c55e40;margin-bottom:16px">
+  {{ session('success') }}
+</div>
+@endif
+
+<div style="overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;font-size:13px">
+  <thead>
+    <tr style="border-bottom:2px solid var(--line)">
+      <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:600">Company</th>
+      <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:600">Tenant ID</th>
+      <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:600">Plan</th>
+      <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:600">Status</th>
+      <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:600">Subscribed Until</th>
+      <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:600">Bukti</th>
+      <th style="text-align:left;padding:10px 12px;color:var(--muted);font-weight:600">Aksi</th>
+    </tr>
+  </thead>
+  <tbody>
+    @forelse($companies as $company)
+    <tr style="border-bottom:1px solid var(--line)">
+      <td style="padding:12px;font-weight:600">{{ $company->name }}</td>
+      <td style="padding:12px;font-size:11px;color:var(--muted);font-family:monospace">{{ $company->tenant_id }}</td>
+      <td style="padding:12px">{{ $company->plan->name ?? '-' }}</td>
+      <td style="padding:12px">
+        @if($company->subscription_status === 'active')
+          <span style="padding:2px 8px;border-radius:99px;font-size:11px;background:#22c55e20;color:#22c55e;font-weight:600">Active</span>
+        @elseif($company->subscription_status === 'trialing')
+          <span style="padding:2px 8px;border-radius:99px;font-size:11px;background:#eab30820;color:#eab308;font-weight:600">Trialing</span>
+        @else
+          <span style="padding:2px 8px;border-radius:99px;font-size:11px;background:#ef444420;color:#ef4444;font-weight:600">{{ $company->subscription_status }}</span>
+        @endif
+      </td>
+      <td style="padding:12px;font-size:12px;color:var(--muted)">
+        {{ $company->subscribed_until ? $company->subscribed_until->format('d M Y H:i') : '-' }}
+      </td>
+      <td style="padding:12px">
+        @if(isset($proofs[$company->id]))
+          @php $proof = $proofs[$company->id]; @endphp
+          @if(isset($proof->new_values['proof_path']))
+            <a href="/storage/{{ $proof->new_values['proof_path'] }}" target="_blank" style="color:var(--accent);font-size:12px">Lihat Bukti &nearr;</a>
+          @else
+            <span style="color:var(--muted);font-size:11px">Ada log</span>
+          @endif
+        @else
+          <span style="color:var(--muted);font-size:11px">-</span>
+        @endif
+      </td>
+      <td style="padding:12px">
+        @if($company->subscription_status !== 'active')
+        <form method="POST" action="/super-admin/companies/{{ $company->id }}/approve" style="display:inline">
+          @csrf
+          <button type="submit" style="padding:5px 12px;background:#22c55e;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600"
+            onclick="return confirm('Approve {{ $company->name }}?')">
+            Approve
+          </button>
+        </form>
+        <form method="POST" action="/super-admin/companies/{{ $company->id }}/reject" style="display:inline;margin-left:4px">
+          @csrf
+          <button type="submit" style="padding:5px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600"
+            onclick="return confirm('Reject {{ $company->name }}?')">
+            Reject
+          </button>
+        </form>
+        @else
+        <span style="font-size:12px;color:#22c55e">Sudah aktif</span>
+        @endif
+      </td>
+    </tr>
+    @empty
+    <tr>
+      <td colspan="7" style="padding:24px;text-align:center;color:var(--muted)">Tidak ada perusahaan.</td>
+    </tr>
+    @endforelse
+  </tbody>
+</table>
+</div>
+
+<div style="margin-top:16px">{{ $companies->links() }}</div>
+
+</x-layouts.base>

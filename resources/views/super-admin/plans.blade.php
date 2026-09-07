@@ -1,8 +1,5 @@
 <x-layouts.base>
 
-@section('title', 'Super Admin Plans - LEXLAW v2')
-
-@section('content')
 <div class="max-w-4xl mx-auto px-4 py-8">
     <div class="flex items-center justify-between mb-6">
         <div>

@@ -1,49 +1,85 @@
-<x-layouts.base>
-@section("content")
-    <div class="max-w-lg mx-auto space-y-6">
-        <h1 class="text-3xl font-bold text-center">Scan QRIS to Pay</h1>
+<x-layouts.base title="QRIS Payment - LEXLAW v2">
 
-        <div class="bg-white p-8 rounded-lg shadow text-center">
-            <div class="mb-4">
-                <div class="text-sm text-gray-500">Order ID</div>
-                <div class="font-mono text-sm">{{ $orderId }}</div>
-            </div>
-            <div class="mb-6">
-                <div class="text-sm text-gray-500">Amount</div>
-                <div class="text-3xl font-bold text-indigo-600">Rp {{ number_format($amount, 0, ',', '.') }}</div>
-            </div>
-            <div class="mb-6">
-                <div class="text-sm text-gray-500 mb-2">Plan</div>
-                <div class="font-semibold">{{ $plan->name }}</div>
-            </div>
+<div class="page-head">
+  <div>
+    <div class="eyebrow">Pembayaran</div>
+    <h1 class="page-title">Scan QRIS DANA</h1>
+    <p class="page-desc">Pindai QR di bawah ini menggunakan aplikasi DANA atau mobile banking Anda.</p>
+  </div>
+  <a href="/billing" class="btn btn-secondary">&larr; Kembali</a>
+</div>
 
-            {{-- QR Code placeholder --}}
-            <div class="mx-auto w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center mb-6">
-                <div class="text-center text-gray-500">
-                    <svg class="mx-auto w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-                    </svg>
-                    <div class="text-xs">QR Code</div>
-                    <div class="text-xs text-gray-400">(Connect Midtrans for live QR)</div>
-                </div>
-            </div>
+@if(session('success'))
+<div style="padding:12px 16px;border-radius:8px;background:#22c55e20;color:#22c55e;border:1px solid #22c55e40;margin-bottom:16px">{{ session('success') }}</div>
+@endif
 
-            <div class="text-sm text-gray-500 mb-4">
-                Open your mobile banking or e-wallet app and scan this QR code to complete payment.
-            </div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:960px;margin:0 auto">
 
-            <div class="flex justify-center gap-3 text-xs text-gray-400 mb-6">
-                <span>GoPay</span><span>·</span>
-                <span>OVO</span><span>·</span>
-                <span>DANA</span><span>·</span>
-                <span>LinkAja</span><span>·</span>
-                <span>BCA/Mandiri/BNI QR</span>
-            </div>
+  <div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:24px;text-align:center">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Order ID</div>
+    <div style="font-family:monospace;font-size:12px;margin-bottom:16px">{{ $orderId }}</div>
 
-            <div class="flex justify-center gap-3">
-                <a href="{{ route('billing') }}" class="bg-gray-200 text-gray-700 px-6 py-2 rounded hover:bg-gray-300">Cancel</a>
-                <a href="{{ route('billing') }}" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">I've Paid</a>
-            </div>
-        </div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Total Pembayaran</div>
+    <div style="font-size:32px;font-weight:700;color:var(--accent);margin-bottom:16px">Rp {{ number_format($amount, 0, ',', '.') }}</div>
+
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Paket</div>
+    <div style="font-weight:600;margin-bottom:20px">{{ $plan->name }}</div>
+
+    <img src="{{ $qrisImage ?? '/qris/qris_ark.jpeg' }}" alt="QRIS DANA"
+      style="width:100%;max-width:280px;border-radius:12px;border:1px solid var(--line);background:#fff;margin-bottom:16px">
+
+    <div style="font-size:12px;color:var(--muted)">
+      Buka aplikasi DANA &rarr; Pindai QR &rarr; Pastikan nominal sesuai
     </div>
+  </div>
+
+  <div style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:24px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:16px">Upload Bukti Pembayaran</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:20px">
+      Setelah transfer, upload screenshot bukti pembayaran. Admin akan mengaktifkan langganan Anda.
+    </p>
+
+    <form method="POST" action="/payment/upload-proof" enctype="multipart/form-data" id="proof-form">
+      @csrf
+      <input type="file" name="proof" id="proof-input" accept="image/*" required
+        style="display:none"
+        onchange="previewProof(this)">
+      <div id="upload-area" onclick="document.getElementById('proof-input').click()"
+        style="border:2px dashed var(--line);border-radius:12px;padding:40px 20px;text-align:center;cursor:pointer;transition:border-color 0.2s"
+        onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--line)'">
+        <div style="font-size:32px;margin-bottom:8px">&#128247;</div>
+        <div style="font-size:13px;color:var(--muted)">Klik untuk pilih screenshot</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">JPG, PNG &mdash; max 5 MB</div>
+      </div>
+      <div id="preview-container" style="display:none;margin-top:12px;text-align:center">
+        <img id="preview-img" style="max-height:200px;border-radius:8px;border:1px solid var(--line)">
+        <div id="preview-name" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+      </div>
+    </form>
+
+    <button id="btn-submit" onclick="document.getElementById('proof-form').submit()" disabled
+      style="width:100%;margin-top:20px;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer;opacity:0.5;transition:opacity 0.2s">
+      Kirim Bukti Pembayaran
+    </button>
+  </div>
+
+</div>
+
+<script>
+function previewProof(input) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('preview-img').src = e.target.result;
+      document.getElementById('preview-name').textContent = input.files[0].name;
+      document.getElementById('preview-container').style.display = 'block';
+      document.getElementById('upload-area').style.display = 'none';
+      document.getElementById('btn-submit').disabled = false;
+      document.getElementById('btn-submit').style.opacity = '1';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+
 </x-layouts.base>

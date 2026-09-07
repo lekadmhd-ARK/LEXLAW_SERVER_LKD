@@ -1,6 +1,5 @@
-@extends('layouts.base')
+<x-layouts.base title="Edit Harga - LEXLAW v2">
 
-@section('content')
 <div class="page-head">
     <div>
         <div class="eyebrow">💰 Manajemen Langganan</div>
@@ -70,7 +69,6 @@
     <a href="/dashboard" class="btn btn-primary">Kembali ke Dashboard</a>
 </div>
 @endif
-@endsection
 
 @push('scripts')
 <script>
@@ -82,4 +80,4 @@ document.getElementById('yearly-price').addEventListener('input', function() {
     this.value = this.value.replace(/[^0-9]/g, '').replace(/(\..*)\..*/, '$1');
 });
 </script>
-@endpush
+@endpush</x-layouts.base>

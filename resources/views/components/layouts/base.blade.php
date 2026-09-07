@@ -150,6 +150,7 @@
             </div>
             <nav class="sb-nav">
                 <a href="/dashboard" data-tip="Dashboard" class="{{ request()->is('dashboard') ? 'active' : '' }}"><span class="ic">📊</span><span class="txt">Dashboard</span></a>
+                <a href="/decisions" data-tip="Feeds Putusan" class="{{ request()->is('decisions*') ? 'active' : '' }}"><span class="ic">📰</span><span class="txt">Feeds Putusan</span></a>
                 <a href="/regulations" data-tip="Regulations" class="{{ request()->is('regulations*') ? 'active' : '' }}"><span class="ic">⚖️</span><span class="txt">Regulations</span></a>
                 <a href="/legal-glossary" data-tip="Glossary" class="{{ request()->is('legal-glossary*') ? 'active' : '' }}"><span class="ic">◇</span><span class="txt">Glossary</span></a>
                 <a href="/consolidations" data-tip="Consolidations" class="{{ request()->is('consolidations*') ? 'active' : '' }}"><span class="ic">◎</span><span class="txt">Consolidations</span></a>
@@ -161,6 +162,7 @@
                 <a href="/ai/validity" data-tip="Validity Checker" class="{{ request()->is('ai/validity*') ? 'active' : '' }}"><span class="ic">✓</span><span class="txt">Validity Checker</span></a>
                 <div class="sb-divider"></div>
                 <a href="/billing" data-tip="Billing" class="{{ request()->is('billing*') ? 'active' : '' }}"><span class="ic">◆</span><span class="txt">Billing</span></a>
+@if(auth()->user()->role == 1)                <a href="/super-admin/companies" data-tip="Payment Approval" class="{{ request()->is("super-admin/companies*") ? "active" : "" }}"><span class="ic">💳</span><span class="txt">Payment Approval</span></a>                @endif
                 <a href="/password-change" data-tip="Password" class="{{ request()->is('password-change') ? 'active' : '' }}"><span class="ic">🔐</span><span class="txt">Password</span></a>
                 <div class="sb-divider"></div>
                 <a href="/disclaimer" data-tip="Disclaimer" class="{{ request()->is('disclaimer') ? 'active' : '' }}"><span class="ic">🛡️</span><span class="txt">Disclaimer</span></a>

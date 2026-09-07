@@ -72,7 +72,7 @@ class Regulation extends Model
 
     public function getHierarchyLabelAttribute(): string
     {
-        return match($this->hierarchy_level) {
+        return match((string)$this->hierarchy_level) {
             '1' => 'Undang-Undang (UU)',
             '2' => 'Peraturan Pemerintah (PP)',
             '3' => 'Peraturan Presiden (Perpres)',
