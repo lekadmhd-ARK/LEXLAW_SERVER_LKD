@@ -15,7 +15,7 @@
 
         <div style="height:1px;background:var(--line);margin:12px 0"></div>
 
-        <!-- Case Law -->
+                <!-- Case Law -->
         <a href="/putusans" class="nav-link {{ $active === 'putusans' ? 'active' : '' }}">📜 Putusan</a>
 
         <div style="height:1px;background:var(--line);margin:12px 0"></div>
