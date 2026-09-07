@@ -302,4 +302,15 @@ class LexlawE2eTest extends TestCase
         preg_match('/now\(\)->addDays\((\d+)\)/', $src, $m);
         $this->assertSame('3', $m[1] ?? '', 'Trial baru harus 3 hari');
     }
+
+    /** @test */
+    public function test_smoke_halaman_tabel_admin()
+    {
+        $admin = $this->user();
+        // Halaman dengan tabel yang dibungkus table-scroll
+        foreach (['/super-admin/plans', '/super-admin/companies', '/users', '/companies', '/team-workspaces', '/audit-logs'] as $url) {
+            $resp = $this->actingAs($admin)->get($url);
+            $resp->assertOk();
+        }
+    }
 }

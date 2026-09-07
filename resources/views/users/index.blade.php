@@ -2,6 +2,7 @@
 @section("content")
     <div class="max-w-3xl mx-auto">
         <h1 class="text-3xl font-bold mb-6">Users</h1>
+        <div class="table-scroll">
         <table class="w-full bg-white rounded-lg shadow overflow-hidden">
             <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3 text-left">Role</th></tr></thead>
             <tbody class="divide-y">
@@ -11,5 +12,6 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </x-layouts.base>

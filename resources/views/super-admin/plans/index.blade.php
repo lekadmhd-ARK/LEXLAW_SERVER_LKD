@@ -4,7 +4,8 @@
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-3xl font-bold">Subscription Plans</h1>
         </div>
-        <table class="w-full bg-white rounded-lg shadow overflow-hidden">
+        <div class="table-scroll">
+        <table class="w-full bg-white rounded-lg shadow overflow-hidden table-min">
             <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Monthly</th><th class="px-4 py-3 text-left">Yearly</th><th class="px-4 py-3 text-left">Max Users</th><th class="px-4 py-3 text-left">Max Regulations</th><th class="px-4 py-3 text-left">AI Enabled</th><th class="px-4 py-3 text-left">Active</th></tr></thead>
             <tbody class="divide-y">
                 @forelse ($plans as $plan)
@@ -13,5 +14,6 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </x-layouts.base>

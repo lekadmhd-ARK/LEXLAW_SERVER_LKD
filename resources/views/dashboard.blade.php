@@ -72,7 +72,8 @@
                 <div class="eyebrow">📋 Regulasi Terbaru Ditambahkan</div>
                 <a href="/regulations" class="btn btn-secondary" style="font-size:12px;padding:6px 12px">Lihat Semua →</a>
             </div>
-            <table class="table" style="width:100%">
+            <div class="table-scroll">
+            <table class="table table-min" style="width:100%">
                 <thead>
                     <tr>
                         <th>Dokumen</th>
@@ -107,6 +108,7 @@
                 @endforelse
                 </tbody>
             </table>
+            </div>
         </div>
 
         {{-- INFO TAMBAHAN --}}

@@ -5,6 +5,7 @@
             <h1 class="text-3xl font-bold">Team Workspaces</h1>
         </div>
         @if (session('success'))<div class="mb-4 p-4 bg-green-50 text-green-700 rounded">{{ session('success') }}</div>@endif
+        <div class="table-scroll">
         <table class="w-full bg-white rounded-lg shadow overflow-hidden">
             <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Active</th><th class="px-4 py-3">Actions</th></tr></thead>
             <tbody class="divide-y">
@@ -14,6 +15,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
         <div class="mt-6 bg-white p-6 rounded-lg shadow">
             <h3 class="text-lg font-medium mb-4">Create Workspace</h3>
             <form method="POST" action="/team-workspaces" class="space-y-4">

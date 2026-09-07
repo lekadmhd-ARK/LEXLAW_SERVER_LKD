@@ -2,7 +2,8 @@
 @section("content")
     <div class="max-w-7xl mx-auto">
         <h1 class="text-3xl font-bold mb-6">Audit Logs</h1>
-        <table class="w-full bg-white rounded-lg shadow overflow-hidden">
+        <div class="table-scroll">
+        <table class="w-full bg-white rounded-lg shadow overflow-hidden table-min">
             <thead class="bg-gray-50"><tr><th class="px-4 py-3 text-left">Action</th><th class="px-4 py-3 text-left">User</th><th class="px-4 py-3 text-left">Subject</th><th class="px-4 py-3 text-left">IP</th><th class="px-4 py-3 text-left">Time</th></tr></thead>
             <tbody class="divide-y">
                 @forelse ($items as $item)
@@ -11,6 +12,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
         {{ $items->links() }}
     </div>
 </x-layouts.base>

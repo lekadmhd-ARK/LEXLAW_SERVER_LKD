@@ -72,6 +72,7 @@
         </div>
 
         <div class="card">
+            <div class="table-scroll">
             <table id="regulationsTable" class="display" style="width:100%">
                 <thead>
                     <tr>
@@ -108,6 +109,7 @@
                 @endforelse
                 </tbody>
             </table>
+            </div>
         </div>
 
         {{-- Info Pagination --}}
@@ -142,6 +144,8 @@
             pageLength: 10,
             lengthMenu: [5, 10, 25, 50, 100],
             order: [[1, 'asc']],
+            scrollX: true,
+            autoWidth: true,
             language: {
                 search: "Cari:",
                 lengthMenu: "Tampilkan _MENU_ baris",

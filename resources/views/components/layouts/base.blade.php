@@ -103,6 +103,12 @@
         .table th{border-bottom:1px solid var(--line);padding:10px 12px;font-size:11px;font-weight:600;color:var(--muted);text-align:left;text-transform:uppercase;letter-spacing:.3px}
         .table td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px}
 
+        /* ========== RESPONSIVE TABLE SCROLL ========== */
+        .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius)}
+        .table-scroll::-webkit-scrollbar{height:6px}
+        .table-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+        .table-scroll .table-min{min-width:640px}
+
         /* ========== MOBILE ========== */
         .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:90;opacity:0;transition:opacity .25s}
         .sidebar-overlay.active{display:block;opacity:1}
