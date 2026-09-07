@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Ai;
 
 use App\Http\Controllers\Controller;
 use App\Services\LegalSourceService;
+use App\Models\Putusan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
@@ -108,6 +109,21 @@ class LexQnaController extends Controller
             foreach ($contextResults as $row) {
                 $context .= "\n[" . $row->category . " " . $row->number . "/" . $row->year . " - " . $row->title . " " . ($row->article_number ?? '') . "]:\n";
                 $context .= mb_substr($row->content ?? '', 0, 2000) . "\n";
+            }
+
+            // 1b) RETRIEVE dari database lokal: putusan (yurisprudensi)
+            $putusanResults = Putusan::published()
+                ->search($question)
+                ->latest('tanggal_putusan')
+                ->limit(3)
+                ->get();
+
+            foreach ($putusanResults as $p) {
+                $context .= "\n[Putusan " . $p->nomor_putusan . " - " . $p->nama_pengadilan . " (" . $p->golongan_perkara . ")]:\n";
+                $context .= "Ringkasan: " . mb_substr($p->ringkasan_putusan ?? '', 0, 1500) . "\n";
+                if ($p->isi_putusan) {
+                    $context .= "Isi: " . mb_substr($p->isi_putusan, 0, 2000) . "\n";
+                }
             }
 
             // 2) RETRIEVE live dari sumber resmi (peraturan.bpk.go.id + situs .go.id via search)
