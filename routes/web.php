@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('legal-glossary', LegalGlossaryController::class);
     Route::resource('consolidations', ConsolidationController::class)->only(['index', 'store', 'update']);
     Route::resource('putusans', PutusanController::class)->only(['index', 'show']);
+    Route::post('putusans/{putusan}/analyze', [PutusanController::class, 'analyze'])->name('putusans.analyze')->where('putusan', '[0-9]+');
     Route::resource('team-workspaces', TeamWorkspaceController::class)->only(['index', 'store']);
     Route::resource('companies', CompanyController::class)->only(['index', 'show']);
     Route::resource('users', UserController::class)->only(['index', 'show']);
