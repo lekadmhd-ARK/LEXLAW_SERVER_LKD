@@ -42,4 +42,14 @@ return [
         'model'    => env('AI_MODEL', 'ARK'),
     ],
 
+    'doku' => [
+        'client_id'  => env('DOKU_CLIENT_ID'),
+        'secret_key' => env('DOKU_SECRET_KEY'),
+        'api_key'    => env('DOKU_API_KEY'),
+        'sandbox'    => env('DOKU_SANDBOX', true),
+        'base_url'   => env('DOKU_SANDBOX', true)
+            ? 'https://api-sandbox.doku.com'
+            : 'https://api.doku.com',
+    ],
+
 ];

@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\Billing2Controller;
+use App\Http\Controllers\Billing3Controller;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SuperAdmin\PlanController;
 use App\Http\Controllers\DecisionController;
@@ -33,6 +34,7 @@ Route::get('/refund-policy', fn() => view('refund'))->name('refund-policy');
 
 // Webhook (no auth)
 Route::post('/webhook/payment', [PaymentWebhookController::class, '__invoke'])->name('webhook.payment');
+Route::post('/webhook/doku', [Billing3Controller::class, 'handleNotification'])->name('webhook.doku');
 
 // Auth (guest)
 Route::middleware('guest')->group(function () {
@@ -111,4 +113,8 @@ Route::middleware('auth')->group(function () {
     // Billing 2 - QRIS Dinamis (testing, isolated from /billing)
     Route::get('/billing2', [Billing2Controller::class, '__invoke'])->name('billing2');
     Route::post('/billing2/make-dynamic', [Billing2Controller::class, 'makeDynamic'])->name('billing2.make-dynamic');
+
+    // Billing 3 - DOKU Checkout (testing, isolated from /billing)
+    Route::get('/billing3', [Billing3Controller::class, '__invoke'])->name('billing3');
+    Route::post('/billing3/checkout', [Billing3Controller::class, 'createCheckout'])->name('billing3.checkout');
 });
