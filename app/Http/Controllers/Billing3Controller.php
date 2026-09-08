@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PaymentConfirmationMail;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class Billing3Controller extends Controller
 {
@@ -94,10 +97,28 @@ class Billing3Controller extends Controller
         $json = $request->json();
         $status = strtoupper((string) ($json->get('transaction.status') ?? $json->get('status') ?? ''));
         $invoice = $json->get('order.invoice_number') ?? $json->get('invoice_number');
-        $amount = $json->get('order.amount') ?? $json->get('amount');
+        $amount = $json->get('order.amount') ?? $json->get('amount') ?? 0;
 
-        // TODO: map DOKU notification to company subscription when SUCCESS.
-        // Log keeps audit trail for now during billing3 sandbox testing.
+        if ($status === 'SUCCESS') {
+            $company = $this->findCompanyByInvoice($invoice);
+            if ($company) {
+                $company->update([
+                    'subscription_status' => 'active',
+                    'subscribed_until' => now()->addDays(30),
+                ]);
+
+                $owner = $company->users()->where('role', 'owner')->first();
+                if ($owner) {
+                    Mail::to($owner->email)->send(new PaymentConfirmationMail(
+                        $company,
+                        (string) $invoice,
+                        (int) $amount,
+                        method: 'DOKU Checkout',
+                        paidAt: now()->setTimezone('Asia/Jakarta')->format('d M Y H:i'),
+                    ));
+                }
+            }
+        }
 
         Log::info('DOKU notification validated', [
             'invoice' => $invoice,
@@ -106,6 +127,19 @@ class Billing3Controller extends Controller
         ]);
 
         return response()->json(['status' => 'ok']);
+    }
+
+    private function findCompanyByInvoice(?string $invoice): ?Company
+    {
+        if (!$invoice) {
+            return null;
+        }
+
+        // Pola: LAWLEX-{company_id}-{timestamp}
+        $parts = explode('-', $invoice);
+        $companyId = $parts[1] ?? null;
+
+        return $companyId ? Company::find($companyId) : null;
     }
 
     private function backToForm(?string $error, $company)

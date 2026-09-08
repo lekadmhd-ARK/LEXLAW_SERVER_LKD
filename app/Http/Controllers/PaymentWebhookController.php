@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Mail\PaymentConfirmationMail;
 use App\Models\Company;
 use App\Models\AuditLog;
+use Illuminate\Support\Facades\Mail;
 
 class PaymentWebhookController extends Controller
 {
@@ -38,6 +40,19 @@ class PaymentWebhookController extends Controller
                         'subscription_status' => $subscriptionStatus,
                         'subscribed_until' => $subscriptionStatus === 'active' ? now()->addDays(30) : null,
                     ]);
+
+                    if ($subscriptionStatus === 'active') {
+                        $owner = $company->users()->where('role', 'owner')->first();
+                        if ($owner) {
+                            Mail::to($owner->email)->send(new PaymentConfirmationMail(
+                                $company,
+                                (string) $payload['order_id'],
+                                (int) ($payload['gross_amount'] ?? 0),
+                                method: 'Midtrans',
+                                paidAt: now()->setTimezone('Asia/Jakarta')->format('d M Y H:i'),
+                            ));
+                        }
+                    }
                 }
             }
 

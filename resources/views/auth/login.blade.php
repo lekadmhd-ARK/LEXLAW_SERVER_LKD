@@ -29,7 +29,7 @@
         </div>
         <div class="row-between">
             <label class="check"><input type="checkbox" name="remember"> Ingat saya</label>
-            <a href="#" class="link">Lupa password?</a>
+            <a href="{{ route('password.request') }}" class="link">Lupa password?</a>
         </div>
         <button type="submit" class="btn btn-primary">Masuk →</button>
     </form>

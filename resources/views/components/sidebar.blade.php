@@ -33,6 +33,9 @@
 
         <div style="height:1px;background:var(--line);margin:12px 0"></div>
 
+        <!-- Bantuan -->
+        <a href="/support" class="nav-link {{ $active === 'support' ? 'active' : '' }}">🛟 Hubungi Support</a>
+
         <!-- Logout -->
         <a href="/logout" class="nav-link" style="color:#ef4444">↳ Logout</a>
     </nav>

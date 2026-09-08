@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class RegisterController extends Controller
@@ -31,7 +33,7 @@ class RegisterController extends Controller
             'name' => $validated['company_name'],
             'slug' => Str::slug($validated['company_name']),
             'subscription_status' => 'trialing',
-            'trial_ends_at' => now()->addDays(14),
+            'trial_ends_at' => now()->addDays(3),
         ]);
 
         $user = User::create([
@@ -44,6 +46,9 @@ class RegisterController extends Controller
         ]);
 
         Auth::login($user);
+
+        Mail::to($user->email)->send(new WelcomeMail($user));
+
         return redirect('/dashboard');
     }
 }

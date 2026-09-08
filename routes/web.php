@@ -4,11 +4,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\Billing2Controller;
 use App\Http\Controllers\Billing3Controller;
 use App\Http\Controllers\PaymentWebhookController;
+use App\Http\Controllers\SupportController;
 use App\Http\Controllers\SuperAdmin\PlanController;
 use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\RegulationController;
@@ -42,6 +45,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login']);
     Route::get('/register', [RegisterController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
+
+    // Lupa password
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update.reset');
 });
 
 Route::match(['get', 'post'], '/logout', [LogoutController::class, '__invoke'])->middleware('auth')->name('logout');
@@ -53,6 +62,8 @@ Route::get('regulations/{regulation}/pdf', [RegulationController::class, 'downlo
 
 // Authenticated
 Route::middleware('auth')->group(function () {
+    Route::get('/support', [SupportController::class, 'showForm'])->name('support');
+    Route::post('/support', [SupportController::class, 'store'])->name('support.store')->middleware('throttle:5,60');
     Route::get('/dashboard', [DashboardController::class, '__invoke'])->name('dashboard');
 
     // Billing
