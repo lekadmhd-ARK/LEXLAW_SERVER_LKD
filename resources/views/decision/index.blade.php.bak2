@@ -1,0 +1,56 @@
+<x-layouts.base title="Feed Hasil Putusan">
+    <div>
+        <div class="page-head">
+            <div>
+                <a href="/regulations" class="btn btn-secondary" style="margin-bottom:12px;display:inline-flex">← Kembali ke Regulasi</a>
+                <div class="eyebrow">⚖️ Feed Putusan Mahkamah Agung</div>
+                <h1 class="page-title">Putusan Terbaru</h1>
+            </div>
+        </div>
+
+        @if(session('feed_success'))
+        <div style="padding:12px 16px;border-radius:8px;background:#22c55e20;color:#22c55e;border:1px solid #22c55e40;margin-bottom:16px">
+            <strong>✓</strong> {{ session('feed_success') }}
+        }}</div>
+        @endif
+
+        @if(session('feed_error'))
+        <div style="padding:12px 16px;border-radius:8px;background:#ef444420;color:#ef4444;border:1px solid #ef444440;margin-bottom:16px">
+            <strong>✗</strong> {{ session('feed_error') }}
+        </div>
+        @endif
+
+        {{-- RSS Feed Container --}}
+        <div class="card" style="padding:24px">
+            @if($decisions && count($decisions) > 0)
+            <div style="max-height: 600px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 24px">
+                @foreach($decisions as $dec)
+                <div style="padding: 12px 0; border-bottom: 1px solid var(--line);">
+                    <a href="{{ $dec['link'] }}" target="_blank" rel="noopener noreferrer" style="color: var(--accent); text-decoration: none; font-weight: 500; display: block">
+                        {{ $dec['title'] }}
+                    </a>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px">
+                        Tanggal: {{ $dec['pubDate'] ?? 'N/A' }}
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <div style="font-size: 14px; color: var(--text-muted);">
+                <p>Feed putusan saat ini belum dapat diakses.</p>
+                <p style="margin-top: 8px">Mungkin situs Mahkamah Agung sedang dalam pemeliharaan atau perubahan struktur RSS.</p>
+                <p style="margin-top: 12px">
+                    <button onclick="location.reload()" class="btn btn-secondary" style="padding:6px 12px">Refresh Feed</button>
+                </button>
+            </div>
+            @endif
+        </div>
+
+        {{-- Refresh Form --}}
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: -4px">
+            <form method="GET" action="/decision" style="margin:0">
+                <button type="submit" class="btn btn-secondary" style="padding:6px 12px">Refresh Feed</button>
+            </form>
+        </div>
+    </div>
+</x-layouts.base>

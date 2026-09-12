@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SuperAdmin\PlanController;
+use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\RegulationController;
 use App\Http\Controllers\RegulationContentController;
 use App\Http\Controllers\LegalGlossaryController;
@@ -59,11 +60,10 @@ Route::middleware('auth')->group(function () {
     // Core CRUD
     Route::resource('regulations', RegulationController::class);
     Route::get('regulations/{regulation}/pdf', [RegulationController::class, 'downloadPdf'])->name('regulations.pdf');
-    Route::post('regulations/fetch-jdih', [RegulationController::class, 'fetchFromJdihUrl'])->name('regulations.fetch-jdih')->middleware('throttle:30,1, check.quota:contract-review');
+    Route::post('regulations/fetch-jdih', [RegulationController::class, 'fetchFromJdihUrl'])->name('regulations.fetch-jdih')->middleware('throttle:30,1');
     Route::resource('regulation-contents', RegulationContentController::class)->only(['index', 'store', 'update']);
-    Route::get('legal-glossary/search', [LegalGlossaryController::class, 'search'])->name('legal-glossary.search');
     Route::resource('legal-glossary', LegalGlossaryController::class);
-    Route::resource('consolidations', ConsolidationController::class)->only(['index', 'create', 'store', 'show', 'update']);
+    Route::resource('consolidations', ConsolidationController::class)->only(['index', 'store', 'update']);
     Route::resource('team-workspaces', TeamWorkspaceController::class)->only(['index', 'store']);
     Route::resource('companies', CompanyController::class)->only(['index', 'show']);
     Route::resource('users', UserController::class)->only(['index', 'show']);
@@ -79,7 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/ai/validity', [ValidityCheckerController::class, 'form'])->name('ai.validity.form');
     Route::post('/ai/validity', [ValidityCheckerController::class, 'check'])->name('ai.validity');
     Route::post('/ai/analyze', [AdvancedAiController::class, 'analyze'])->name('ai.analyze');
-    Route::match(['get', 'post'], '/ai/contract-review', [AdvancedAiController::class, 'contractReview'])->name('ai.contract-review')->middleware('throttle:30,1, check.quota:contract-review');
+    Route::match(['get', 'post'], '/ai/contract-review', [AdvancedAiController::class, 'contractReview'])->name('ai.contract-review')->middleware('throttle:30,1');
     Route::post("ai/contract-review/download", [AdvancedAiController::class, "downloadResult"])->name("ai.contract-review.download");
     Route::post('/ai/precedent-matching', [AdvancedAiController::class, 'precedentMatching'])->name('ai.precedent-matching');
     Route::post('/pdf/upload', [PdfController::class, 'upload'])->name('pdf.upload');

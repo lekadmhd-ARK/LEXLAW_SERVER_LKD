@@ -120,6 +120,18 @@ Route::middleware('auth')->group(function () {
     Route::patch('team-workspaces/{workspace}/tasks/{task}/toggle', [WorkspaceTaskController::class, 'toggleStatus'])->name('workspace-tasks.toggle');
     Route::post('team-workspaces/{workspace}/time-entries', [WorkspaceTimeEntryController::class, 'store'])->name('workspace-time.store');
     Route::delete('team-workspaces/{workspace}/time-entries/{entry}', [WorkspaceTimeEntryController::class, 'destroy'])->name('workspace-time.destroy');
+    // SaaS Layer Routes
+    Route::get("/notifications", [NotificationController::class, "index"])->name("notifications.index");
+    Route::post("/notifications/{id}/read", [NotificationController::class, "read"])->name("notifications.read");
+    Route::post("/notifications/read-all", [NotificationController::class, "readAll"])->name("notifications.read.all");
+    Route::get("/search", [SearchController::class, "index"])->name("search");
+    Route::get("/security", [SecurityController::class, "index"])->name("security.index");
+    Route::delete("/security/sessions/{id}", [SecurityController::class, "revokeSession"])->name("security.revoke");
+    Route::post("/security/sessions/revoke-all", [SecurityController::class, "revokeAllOtherSessions"])->name("security.revoke-all");
+    Route::get("/reports", [ReportsController::class, "index"])->name("reports.index");
+    Route::get("/reports/{workspace}", [ReportsController::class, "workspace"])->name("reports.workspace");
+    Route::get("/settings/branding", [BrandingController::class, "edit"])->name("branding.edit");
+    Route::put("/settings/branding", [BrandingController::class, "update"])->name("branding.update");
     Route::resource('companies', CompanyController::class)->only(['index', 'show']);
     Route::resource('users', UserController::class)->only(['index', 'show']);
     Route::resource('audit-logs', AuditLogController::class)->only(['index', 'show']);

@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+class DecisionController extends Controller
+{
+    public function index()
+    {
+        $rawRssUrl = 'https://putusan3.mahkamahagung.go.id/rss/pengadilan.html';
+        $decisions = [];
+        $errorMsg = null;
+
+        try {
+            // Bypass Cloudflare via Jina AI reader engine (gratis, tanpa API key)
+            $proxyUrl = 'https://r.jina.ai/' . $rawRssUrl;
+            
+            $resp = Http::timeout(18)
+                ->withHeaders([
+                    'User-Agent' => 'LAWLEX-RSS-Reader/2.0',
+                    'Accept' => 'text/plain',
+                ])
+                ->get($proxyUrl);
+
+            if ($resp->successful()) {
+                $body = $resp->body();
+                
+                // Parse blok putusan dari markdown hasil reader
+                // Format:
+                // ### [Putusan ...](https://putusan3.mahkamahagung.go.id/direktori/putusan/xxx.html)
+                // [Tags/Klasifikasi]
+                // Register : ... - Putus : ... - Upload : ...
+                // URL
+                // Tanggal pubDate
+                $pattern = '/###\s*\[(.*?)\]\((https:\/\/putusan3\.mahkamahagung\.go\.id\/direktori\/putusan\/.*?\.html)\)\s*\n\n(.*?)\n\n(Register.*?)\n\n(.*?)\n\n([A-Za-z]{3},\s*\d{2}\s+[A-Za-z]{3}\s+\d{4}[^\n]*)/s';
+                
+                if (preg_match_all($pattern, $body, $matches, PREG_SET_ORDER)) {
+                    foreach ($matches as $m) {
+                        // Bersihkan tag markdown dari klasifikasi [Tag](link)
+                        $rawTags = $m[3];
+                        preg_match_all('/\[(.*?)\]/', $rawTags, $tagMatches);
+                        $tags = !empty($tagMatches[1]) ? implode(' • ', $tagMatches[1]) : '';
+
+                        $decisions[] = [
+                            'title' => trim($m[1]),
+                            'link' => trim($m[2]),
+                            'tags' => $tags,
+                            'dates' => trim($m[4]),
+                            'pubDate' => trim($m[6]),
+                        ];
+                    }
+                }
+
+                // Fallback jika regex spesifik meleset, ambil link & judul saja
+                if (empty($decisions)) {
+                    $fallbackPattern = '/###\s*\[(.*?)\]\((https:\/\/putusan3\.mahkamahagung\.go\.id\/direktori\/putusan\/.*?\.html)\)/';
+                    if (preg_match_all($fallbackPattern, $body, $fbMatches, PREG_SET_ORDER)) {
+                        foreach ($fbMatches as $fm) {
+                            $decisions[] = [
+                                'title' => trim($fm[1]),
+                                'link' => trim($fm[2]),
+                                'tags' => 'Putusan Mahkamah Agung',
+                                'dates' => '',
+                                'pubDate' => '',
+                            ];
+                        }
+                    }
+                }
+
+                if (empty($decisions)) {
+                    $errorMsg = 'Format feed berubah atau tidak dapat diurai saat ini.';
+                }
+            } else {
+                $errorMsg = 'Gagal mengakses feed Mahkamah Agung (Status: ' . $resp->status() . ').';
+            }
+        } catch (\Throwable $e) {
+            $errorMsg = 'Gagal memuat feed: ' . $e->getMessage();
+        }
+
+        return view('decision.index', compact('decisions', 'errorMsg', 'rawRssUrl'));
+    }
+}

@@ -5,14 +5,6 @@
         <span style="font-size:20px;font-weight:600">⚖️ LEXLAW v2</span>
     </div>
 
-    <!-- Search -->
-    <form action="{{ route('search') }}" method="GET" style="margin-bottom:16px">
-        <div style="position:relative">
-            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.5">🔍</span>
-            <input type="search" name="q" placeholder="Cari workspace..." style="width:100%;padding-left:32px">
-        </div>
-    </form>
-
     <nav style="display:flex;flex-direction:column;gap:4px">
         <!-- Main Navigation -->
         <a href="/dashboard" class="nav-link {{ $active === 'dashboard' ? 'active' : '' }}">📊 Dashboard</a>
@@ -20,11 +12,6 @@
         <a href="/legal-glossary" class="nav-link {{ $active === 'glossary' ? 'active' : '' }}">◇ Glossary</a>
         <a href="/consolidations" class="nav-link {{ $active === 'consolidations' ? 'active' : '' }}">◎ Consolidations</a>
         <a href="/team-workspaces" class="nav-link {{ $active === 'workspaces' ? 'active' : '' }}">▣ Workspaces</a>
-
-        <div style="height:1px;background:var(--line);margin:12px 0"></div>
-
-        <!-- Case Law -->
-        <a href="/putusans" class="nav-link {{ $active === 'putusans' ? 'active' : '' }}">📜 Putusan</a>
 
         <div style="height:1px;background:var(--line);margin:12px 0"></div>
 
@@ -40,28 +27,6 @@
         <a href="/password-change" class="nav-link {{ $active === 'password' ? 'active' : '' }}">🔐 Password</a>
 
         <div style="height:1px;background:var(--line);margin:12px 0"></div>
-
-        <!-- SaaS Layer -->
-        <a href="/reports" class="nav-link {{ $active === 'reports' ? 'active' : '' }}">📊 Reports</a>
-        <a href="/security" class="nav-link {{ $active === 'security' ? 'active' : '' }}">🛡️ Security</a>
-        <a href="/settings/branding" class="nav-link {{ $active === 'branding' ? 'active' : '' }}">🎨 Branding</a>
-
-        <div style="height:1px;background:var(--line);margin:12px 0"></div>
-
-        <!-- Notifications -->
-        <a href="{{ route('notifications.index') }}" class="nav-link {{ $active === 'notifications' ? 'active' : '' }}">
-            🔔 Notifications
-            @if(auth()->check() && auth()->user()->unreadNotifications->count())
-            <span style="float:right;background:var(--err);color:#fff;border-radius:99px;padding:1px 8px;font-size:11px">
-                {{ auth()->user()->unreadNotifications->count() }}
-            </span>
-            @endif
-        </a>
-
-        <div style="height:1px;background:var(--line);margin:12px 0"></div>
-
-        <!-- Bantuan -->
-        <a href="/support" class="nav-link {{ $active === 'support' ? 'active' : '' }}">🛟 Hubungi Support</a>
 
         <!-- Logout -->
         <a href="/logout" class="nav-link" style="color:#ef4444">↳ Logout</a>

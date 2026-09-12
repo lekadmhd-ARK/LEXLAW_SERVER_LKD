@@ -57,8 +57,10 @@ Route::middleware('auth')->group(function () {
     Route::put("/super-admin/plans/edit", [PlanController::class, "update"])->name("super-admin.plans.update");
 
     // Core CRUD
-    Route::resource('regulations', RegulationController::class);
+    Route::resource('regulations', RegulationController::class)->only(['index', 'show', 'create', 'store']);
+    Route::post('regulations/search-fetch', [RegulationController::class, 'searchAndFetchFromBpk'])->name('regulations.search-fetch');
     Route::get('regulations/{regulation}/pdf', [RegulationController::class, 'downloadPdf'])->name('regulations.pdf');
+    Route::post("regulations/{regulation}/refetch", [RegulationController::class, "refetchFromBpk"])->name("regulations.refetch");
     Route::post('regulations/fetch-jdih', [RegulationController::class, 'fetchFromJdihUrl'])->name('regulations.fetch-jdih')->middleware('throttle:30,1, check.quota:contract-review');
     Route::resource('regulation-contents', RegulationContentController::class)->only(['index', 'store', 'update']);
     Route::get('legal-glossary/search', [LegalGlossaryController::class, 'search'])->name('legal-glossary.search');
@@ -88,4 +90,4 @@ Route::middleware('auth')->group(function () {
     // Password change
     Route::get('/password-change', [PasswordController::class, 'showForm'])->name('password.change');
     Route::post('/password-change', [PasswordController::class, 'updatePassword'])->name('password.update');
-});
+});Route::get("decision", function () { return view("decision/index"); })->name("decision");

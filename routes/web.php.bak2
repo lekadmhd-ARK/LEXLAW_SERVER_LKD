@@ -57,7 +57,7 @@ Route::middleware('auth')->group(function () {
     Route::put("/super-admin/plans/edit", [PlanController::class, "update"])->name("super-admin.plans.update");
 
     // Core CRUD
-    Route::resource('regulations', RegulationController::class);
+    Route::resource('regulations', RegulationController::class)->only(['index', 'show']);
     Route::get('regulations/{regulation}/pdf', [RegulationController::class, 'downloadPdf'])->name('regulations.pdf');
     Route::post('regulations/fetch-jdih', [RegulationController::class, 'fetchFromJdihUrl'])->name('regulations.fetch-jdih')->middleware('throttle:30,1, check.quota:contract-review');
     Route::resource('regulation-contents', RegulationContentController::class)->only(['index', 'store', 'update']);

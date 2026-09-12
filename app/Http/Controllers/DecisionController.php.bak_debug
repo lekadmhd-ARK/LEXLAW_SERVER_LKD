@@ -1,0 +1,247 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+class DecisionController extends Controller
+{
+    /**
+     * Home page - show the filter form.
+     */
+    public function index()
+    {
+        return view('decision.index', [
+            'title' => 'Feeds Putusan Mahkamah Agung',
+            'pn_selected' => null,
+            'categories' => [],
+            'decisions' => [],
+            'has_more' => false,
+            'page' => 1,
+            'raw_rss_url' => 'https://putusan3.mahkamahagung.go.id/rss/pengadilan/pn-jakarta-pusat.html',
+        ]);
+    }
+
+    /**
+     * Get list of PN courts from the pengadilan directory RSS.
+     * Parses: https://putusan3.mahkamahagung.go.id/rss.html
+     * Returns: [{slug, nama, provinsi}] - 383 PN entries
+     */
+    public function getCourts()
+    {
+        try {
+            $resp = Http::timeout(15)
+                ->withHeaders([
+                    'User-Agent' => 'LAWLEX/1.0',
+                    'Accept' => 'application/json',
+                ])
+                ->get('https://r.jina.ai/https://putusan3.mahkamahagung.go.id/rss.html');
+
+            if (!$resp->successful()) {
+                return response()->json([
+                    'error' => 'Gagal mengambil data pengadilan',
+                    'details' => $resp->body()
+                ], 500);
+            }
+
+            $html = $resp->body();
+            $courts = [];
+
+            // Parse format: | [PN PRABUMULIH](url) | 3798 | ...
+            preg_match_all(
+                '/\\|\\s*\\[PN\\s+([^\\]]+)\\]\\(https:\\/\\/putusan3\\.mahkamahagung\\.go\\.id\\/pengadilan\\/profil\\/pengadilan\\/([a-z0-9-]+)\\.html\\)\\s*\\|\\s*([0-9]+)/',
+                $html,
+                $matches,
+                PREG_SET_ORDER
+            );
+
+            $seen = [];
+            foreach ($matches as $m) {
+                $fullName = $m[1];
+                $slug = $m[2];
+                $jumlah = $m[3];
+
+                if (isset($seen[$slug])) continue;
+                if (!$this->isPNEntry($fullName)) continue;
+                $seen[$slug] = true;
+
+                $cleanName = preg_replace('/^(PN|PT|PA|PTA|PTUN)\\s+/i', '', $fullName);
+                $cleanName = trim($cleanName);
+
+                $courts[] = [
+                    'slug' => $slug,
+                    'nama' => $cleanName,
+                    'nama_lengkap' => $fullName,
+                    'jumlah_putusan' => $jumlah,
+                ];
+            }
+
+            usort($courts, fn($a, $b) => strcmp($a['nama'], $b['nama']));
+
+            return response()->json(['courts' => $courts]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function isPNEntry(string $fullName): bool
+    {
+        $skipPrefixes = ['MAHKAMAH', 'DILMIL', 'MS ', 'PTA', 'PTUN', 'PT ', 'DILMILTI', 'DILMILTAMA'];
+        foreach ($skipPrefixes as $prefix) {
+            if (stripos($fullName, $prefix) !== false) return false;
+        }
+        return stripos($fullName, 'PN ') !== false;
+    }
+
+    /**
+     * Get categories for a specific PN court.
+     */
+    public function getCategories(Request $request)
+    {
+        $pnSlug = $request->query('pn');
+        if (!$pnSlug) {
+            return response()->json(['error' => 'Parameter pn required'], 400);
+        }
+
+        try {
+            $url = 'https://r.jina.ai/https://putusan3.mahkamahagung.go.id/rss/pengadilan/' . $pnSlug . '.html';
+            $resp = Http::timeout(15)
+                ->withHeaders(['User-Agent' => 'LAWLEX/1.0'])
+                ->get($url);
+
+            if (!$resp->successful()) {
+                return response()->json(['error' => 'Gagal mengambil RSS pengadilan'], 500);
+            }
+
+            $categories = $this->extractCategoriesFromRSS($resp->body());
+
+            return response()->json(['categories' => $categories]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function extractCategoriesFromRSS(string $html): array
+    {
+        $cats = [];
+
+        preg_match_all(
+            '/\\\[([^\\]]+)\\]\\(https:\\/\\/putusan3\\.mahkamahagung\\.go\\.id\\/direktori\\/index\\/kategori\\/([a-z0-9-]+)\\.html\\)/',
+            $html,
+            $matches,
+            PREG_SET_ORDER
+        );
+
+        $seen = [];
+        foreach ($matches as $m) {
+            $label = trim($m[1]);
+            $slug = $m[2];
+
+            if (isset($seen[$slug])) continue;
+            $seen[$slug] = true;
+
+            $cats[] = [
+                'slug' => $slug,
+                'label' => $label,
+            ];
+        }
+
+        usort($cats, fn($a, $b) => strcmp($a['label'], $b['label']));
+
+        return $cats;
+    }
+
+    /**
+     * Fetch decisions with filters: PN, Kategori, Tahun, Page
+     * Data source: Direktori Putusan MA
+     * URL pattern:
+     *   Base: /direktori/index/pengadilan/{pn}/kategori/{kategori}/tahun/{tahun}.html
+     *   With page: .../page/{page}.html
+     * Returns up to 20 decisions per page.
+     */
+    public function fetchDecisions(Request $request)
+    {
+        $pnSlug = $request->query('pn');
+        $kategoriSlug = $request->query('kategori');
+        $tahun = $request->query('tahun');
+        $page = (int) $request->query('page', 1);
+
+        if (!$pnSlug) {
+            return response()->json(['error' => 'Parameter pn required'], 400);
+        }
+
+        try {
+            $baseUrl = 'https://r.jina.ai/https://putusan3.mahkamahagung.go.id/direktori/index/pengadilan/' . $pnSlug;
+
+            if ($kategoriSlug) {
+                $baseUrl .= '/kategori/' . $kategoriSlug;
+            }
+
+            if ($tahun) {
+                $baseUrl .= '/tahun/' . $tahun;
+            }
+
+            if ($page > 1) {
+                $baseUrl .= '/page/' . $page . '.html';
+            } else {
+                $baseUrl .= '.html';
+            }
+
+            $resp = Http::timeout(20)
+                ->withHeaders(['User-Agent' => 'LAWLEX/1.0'])
+                ->get($baseUrl);
+
+            if (!$resp->successful()) {
+                return response()->json([
+                    'error' => 'Gagal mengambil data putusan',
+                    'details' => 'Status: ' . $resp->status()
+                ], 500);
+            }
+
+            $content = $resp->body();
+            $decisions = $this->parseDecisionsFromDirectori($content);
+
+            $hasMore = count($decisions) >= 20;
+
+            return response()->json([
+                'decisions' => $decisions,
+                'has_more' => $hasMore,
+                'page' => $page,
+                'pn' => $pnSlug,
+                'kategori' => $kategoriSlug,
+                'tahun' => $tahun,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function parseDecisionsFromDirectori(string $html): array
+    {
+        $decisions = [];
+
+        $pattern = '/###\\s*\\[(.*?)\\]\\((https:\\/\\/putusan3\\.mahkamahagung\\.go\\.id\\/direktori\\/putusan\\/.*?\\.html)\\)\\s*\\n\\n(.*?)\\n\\n(Register.*?)\\n\\n(.*?)\\n\\n([A-Za-z]{3},\\s*\\d{2}\\s+[A-Za-z]{3}\\s+\\d{4}[^\\n]*)/s';
+
+        if (preg_match_all($pattern, $html, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $m) {
+                $categories = '';
+                if (preg_match_all('/\\\[([^\\]]+)\\]\\(https:\\/\\/putusan3\\.mahkamahagung\\.go\\.id\\/direktori\\/index\\/kategori\\/([a-z0-9-]+)\\.html\\)/', $m[3], $catMatches)) {
+                    $catLabels = array_map('trim', $catMatches[1]);
+                    $categories = implode(' • ', $catLabels);
+                }
+
+                $decisions[] = [
+                    'title' => trim($m[1]),
+                    'link' => trim($m[2]),
+                    'categories' => $categories,
+                    'dates' => trim($m[4]),
+                    'pub_date' => trim($m[6]),
+                ];
+            }
+        }
+
+        return $decisions;
+    }
+}

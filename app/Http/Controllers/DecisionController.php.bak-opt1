@@ -1,0 +1,117 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+
+class DecisionController extends Controller
+{
+    public function index()
+    {
+        return view('decision.index', ['title' => 'Feeds Putusan']);
+    }
+
+    public function getCourts()
+    {
+        try {
+            $resp = Http::timeout(15)->withHeaders(['User-Agent' => 'LAWLEX/1.0'])->get('https://r.jina.ai/https://putusan3.mahkamahagung.go.id/rss.html');
+            if (!$resp->successful()) return response()->json(['error' => 'Gagal fetch RSS'], 500);
+
+            $courts = [];
+            $lines = explode("\n", $resp->body());
+            foreach ($lines as $line) {
+                if (strpos($line, '|') === false || strpos($line, 'PN') === false) continue;
+                $parts = array_map('trim', explode('|', $line));
+                if (count($parts) < 3) continue;
+
+                // Match: [PN NAMA](https://.../pn-slug.html)
+                if (preg_match('/\[PN\s+(.*?)\]\(.*?\/([a-z0-9\-]+)\.html\)/i', $parts[1], $m)) {
+                    $name = trim($m[1]);
+                    $slug = trim($m[2]);
+                    
+                    // Skip if not PN slug
+                    if (strpos($slug, 'pn-') !== 0) continue;
+
+                    $courts[] = [
+                        'slug' => $slug,
+                        'nama' => $name,
+                        'jumlah' => $parts[2] ?? '0'
+                    ];
+                }
+            }
+            usort($courts, fn($a, $b) => strcmp($a['nama'], $b['nama']));
+            return response()->json(['courts' => $courts]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getCategories(Request $request)
+    {
+        $pn = $request->query('pn');
+        try {
+            $resp = Http::timeout(15)->withHeaders(['User-Agent' => 'LAWLEX/1.0'])->get("https://r.jina.ai/https://putusan3.mahkamahagung.go.id/rss/pengadilan/{$pn}.html");
+            if (!$resp->successful()) return response()->json(['error' => 'Gagal fetch PN RSS'], 500);
+
+            $cats = [];
+            $body = $resp->body();
+            // Match: [Label](.../kategori/slug.html)
+            preg_match_all('/\[(.*?)\]\(https:\/\/putusan3\.mahkamahagung\.go\.id\/direktori\/index\/kategori\/([a-z0-9\-]+)\.html\)/i', $body, $ms, PREG_SET_ORDER);
+            
+            $seen = [];
+            foreach ($ms as $m) {
+                $slug = $m[2];
+                if (isset($seen[$slug])) continue;
+                $seen[$slug] = true;
+                $cats[] = ['slug' => $slug, 'label' => $m[1]];
+            }
+            usort($cats, fn($a, $b) => strcmp($a['label'], $b['label']));
+            return response()->json(['categories' => $cats]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function fetchDecisions(Request $request)
+    {
+        $pn = $request->query('pn');
+        $kat = $request->query('kategori');
+        $thn = $request->query('tahun');
+        $page = (int)$request->query('page', 1);
+
+        try {
+            $url = "https://r.jina.ai/https://putusan3.mahkamahagung.go.id/direktori/index/pengadilan/{$pn}";
+            if ($kat) $url .= "/kategori/{$kat}";
+            if ($thn) $url .= "/tahun/{$thn}";
+            $url .= ($page > 1) ? "/page/{$page}.html" : ".html";
+
+            $resp = Http::timeout(20)->withHeaders(['User-Agent' => 'LAWLEX/1.0'])->get($url);
+            if (!$resp->successful()) return response()->json(['error' => 'Gagal fetch direktori'], 500);
+
+            $html = $resp->body();
+            $decisions = [];
+            // Match pattern putusan
+            $pattern = '/###\s*\[(.*?)\]\((https:\/\/putusan3\.mahkamahagung\.go\.id\/direktori\/putusan\/.*?\.html)\)\s*\n\n(.*?)\n\n(Register.*?)\n\n(.*?)\n\n([A-Za-z]{3}, \d{2} [A-Za-z]{3} \d{4} .*?)/s';
+            
+            if (preg_match_all($pattern, $html, $ms, PREG_SET_ORDER)) {
+                foreach ($ms as $m) {
+                    $tags = '';
+                    if (preg_match_all('/\[(.*?)\]\(https:\/\/putusan3\.mahkamahagung\.go\.id\/direktori\/index\/kategori\/([a-z0-9\-]+)\.html\)/', $m[3], $tm)) {
+                        $tags = implode(' • ', array_map('trim', $tm[1]));
+                    }
+                    $decisions[] = [
+                        'title' => trim($m[1]),
+                        'link' => trim($m[2]),
+                        'categories' => $tags,
+                        'dates' => trim($m[4]),
+                        'pub_date' => trim($m[6])
+                    ];
+                }
+            }
+            return response()->json(['decisions' => $decisions, 'has_more' => count($decisions) >= 20, 'page' => $page]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+}

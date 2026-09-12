@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TeamWorkspace;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 
 class TeamWorkspaceController extends Controller
@@ -57,27 +58,35 @@ class TeamWorkspaceController extends Controller
             'joined_at' => now(),
         ]);
 
+        AuditService::log('workspace.created', $workspace, [], $workspace->toArray());
+
         return redirect()->route('team-workspaces.show', $workspace)
             ->with('success', "Workspace '{$workspace->name}' berhasil dibuat.");
     }
 
     public function show(Request $request, TeamWorkspace $teamWorkspace)
     {
-        $teamWorkspace->load(['members', 'creator', 'documents', 'notes', 'tasks.assignee', 'timeEntries.task']);
         $tab = $request->query('tab', 'members');
         $types = TeamWorkspace::TYPES;
         $roles = TeamWorkspace::MEMBER_ROLES;
 
+        $teamWorkspace->load(['members', 'creator', 'documents', 'notes', 'tasks.assignee', 'timeEntries.task']);
+
+        AuditService::log('workspace.viewed', $teamWorkspace, null, [
+            'tab' => $tab,
+            'member_count' => $teamWorkspace->members->count(),
+        ]);
+
         return view('team-workspaces.show', [
-            'w'         => $teamWorkspace,
-            'tab'       => $tab,
-            'types'     => $types,
-            'roles'     => $roles,
-            'documents' => $teamWorkspace->documents,
-            'notes'     => $teamWorkspace->notes,
-            'tasks'     => $teamWorkspace->tasks,
+            'w'           => $teamWorkspace,
+            'tab'         => $tab,
+            'types'       => $types,
+            'roles'       => $roles,
+            'documents'   => $teamWorkspace->documents,
+            'notes'       => $teamWorkspace->notes,
+            'tasks'       => $teamWorkspace->tasks,
             'timeEntries' => $teamWorkspace->timeEntries,
-            'members'   => $teamWorkspace->members,
+            'members'     => $teamWorkspace->members,
         ]);
     }
 
@@ -86,12 +95,15 @@ class TeamWorkspaceController extends Controller
         $types   = TeamWorkspace::TYPES;
         $members = $teamWorkspace->members;
         $w       = $teamWorkspace;
+        $old     = $w->getOriginal();
 
         return view('team-workspaces.edit', compact('w', 'types', 'members'));
     }
 
     public function update(Request $request, TeamWorkspace $teamWorkspace)
     {
+        $old = $teamWorkspace->getOriginal();
+
         $validated = $request->validate([
             'name'        => 'required|max:255',
             'type'        => 'nullable|in:' . implode(',', array_keys(TeamWorkspace::TYPES)),
@@ -103,6 +115,8 @@ class TeamWorkspaceController extends Controller
 
         $teamWorkspace->update($validated);
 
+        AuditService::log('workspace.updated', $teamWorkspace, array_only($old, ['name', 'type', 'description', 'is_active']), $validated);
+
         return redirect()->route('team-workspaces.show', $teamWorkspace)
             ->with('success', "Workspace '{$teamWorkspace->name}' berhasil diperbarui.");
     }
@@ -110,6 +124,8 @@ class TeamWorkspaceController extends Controller
     public function destroy(Request $request, TeamWorkspace $teamWorkspace)
     {
         $name = $teamWorkspace->name;
+        AuditService::log('workspace.deleted', $teamWorkspace, $teamWorkspace->toArray());
+
         $teamWorkspace->delete();
 
         return redirect()->route('team-workspaces.index')

@@ -1,0 +1,138 @@
+<x-layouts.base title="Feeds Putusan">
+<div>
+  <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div>
+      <div class="eyebrow">Direktori Putusan Mahkamah Agung</div>
+      <h1 class="page-title">Feeds Putusan</h1>
+      <p class="page-desc">Filter bertahap PN → Klasifikasi → Tahun. Data live dari Direktori MA, tanpa DB, tanpa AI.</p>
+    </div>
+  </div>
+
+  <div class="card" style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">1. PN Daerah</label>
+        <select id="pn-select" style="width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+          <option value="">-- Pilih PN --</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">2. Klasifikasi Perkara</label>
+        <select id="kategori-select" disabled style="width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+          <option value="">-- Pilih PN dulu --</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">3. Tahun Putusan</label>
+        <select id="tahun-select" style="width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+          <option value="">Semua Tahun</option>
+          @for($y=date('Y'); $y>=2015; $y--)
+            <option value="{{ $y }}">{{ $y }}</option>
+          @endfor
+        </select>
+      </div>
+      <button id="btn-muat" disabled style="padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-weight:700;cursor:pointer;opacity:.5">Muat</button>
+    </div>
+    <div id="filter-info" style="margin-top:10px;font-size:11px;color:var(--muted)"></div>
+  </div>
+
+  <div id="putusan-list"></div>
+  <div id="putusan-status" style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Pilih PN untuk mulai.</div>
+  <div style="text-align:center;padding:12px">
+    <button id="btn-more" style="display:none;padding:10px 20px;background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);color:var(--text);cursor:pointer">Muat Lebih Banyak ↓</button>
+  </div>
+</div>
+
+<script>
+let curPN='',curKat='',curThn='',curPage=1,hasMore=false,loading=false;
+const pnSel=document.getElementById('pn-select');
+const katSel=document.getElementById('kategori-select');
+const thnSel=document.getElementById('tahun-select');
+const btnMuat=document.getElementById('btn-muat');
+const btnMore=document.getElementById('btn-more');
+const listEl=document.getElementById('putusan-list');
+const statusEl=document.getElementById('putusan-status');
+const infoEl=document.getElementById('filter-info');
+
+async function loadPN(){
+  statusEl.textContent='Memuat daftar PN...';
+  try{
+    const r=await fetch('{{ route('decisions.courts') }}');
+    const j=await r.json();
+    if(j.error) throw new Error(j.error);
+    pnSel.innerHTML='<option value="">-- Pilih PN ('+j.courts.length+') --</option>';
+    j.courts.forEach(c=>{
+      const o=document.createElement('option');
+      o.value=c.slug; o.textContent=c.nama+' ('+c.jumlah_putusan+')';
+      pnSel.appendChild(o);
+    });
+    statusEl.textContent='Pilih PN untuk mulai.';
+  }catch(e){ statusEl.textContent='Gagal memuat PN: '+e.message; }
+}
+loadPN();
+
+pnSel.addEventListener('change', async ()=>{
+  curPN=pnSel.value;
+  katSel.innerHTML='<option value="">Memuat...</option>'; katSel.disabled=true;
+  btnMuat.disabled=true; btnMuat.style.opacity=.5;
+  listEl.innerHTML=''; btnMore.style.display='none';
+  if(!curPN){ katSel.innerHTML='<option value="">-- Pilih PN dulu --</option>'; statusEl.textContent='Pilih PN untuk mulai.'; infoEl.textContent=''; return; }
+  try{
+    const r=await fetch('{{ route('decisions.categories') }}?pn='+encodeURIComponent(curPN));
+    const j=await r.json();
+    if(j.error) throw new Error(j.error);
+    katSel.innerHTML='<option value="">Semua Klasifikasi</option>';
+    j.categories.forEach(c=>{
+      const o=document.createElement('option'); o.value=c.slug; o.textContent=c.label; katSel.appendChild(o);
+    });
+    katSel.disabled=false;
+    btnMuat.disabled=false; btnMuat.style.opacity=1;
+    statusEl.textContent=j.categories.length+' klasifikasi ditemukan. Pilih klasifikasi/tahun lalu klik Muat.';
+    infoEl.textContent='PN: '+pnSel.options[pnSel.selectedIndex].text;
+  }catch(e){ katSel.innerHTML='<option value="">Gagal memuat</option>'; statusEl.textContent=e.message; }
+});
+
+katSel.addEventListener('change', ()=>{ infoEl.textContent='PN: '+(pnSel.options[pnSel.selectedIndex]?.text||'')+' → '+(katSel.options[katSel.selectedIndex]?.text||''); });
+thnSel.addEventListener('change', ()=>{});
+
+btnMuat.addEventListener('click', ()=>{ curKat=katSel.value; curThn=thnSel.value; curPage=1; hasMore=false; listEl.innerHTML=''; fetchPage(1,true); });
+btnMore.addEventListener('click', ()=>{ if(hasMore && !loading) fetchPage(curPage+1,false); });
+
+async function fetchPage(page, reset){
+  if(loading) return; loading=true;
+  statusEl.textContent='Memuat putusan...';
+  btnMuat.disabled=true;
+  try{
+    const q=new URLSearchParams({pn:curPN, page:page});
+    if(curKat) q.set('kategori',curKat);
+    if(curThn) q.set('tahun',curThn);
+    const r=await fetch('{{ route('decisions.fetch') }}?'+q.toString());
+    const j=await r.json();
+    if(j.error) throw new Error(j.error);
+    if(reset) listEl.innerHTML='';
+    if(!j.decisions.length && page===1){ statusEl.textContent='Tidak ada putusan untuk filter ini.'; hasMore=false; btnMore.style.display='none'; }
+    else{
+      j.decisions.forEach(d=> listEl.appendChild(renderCard(d)) );
+      hasMore=j.has_more; curPage=j.page;
+      statusEl.textContent=j.decisions.length+' putusan dimuat (hal '+j.page+')'+(hasMore?' — scroll/muat lagi':' — akhir data');
+      btnMore.style.display=hasMore?'inline-block':'none';
+    }
+  }catch(e){ statusEl.textContent='Gagal: '+e.message; }
+  finally{ loading=false; btnMuat.disabled=false; }
+}
+function renderCard(d){
+  const a=document.createElement('article');
+  a.style.cssText='padding:16px 18px;border-bottom:1px solid var(--line);background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px';
+  a.innerHTML='<a href="'+esc(d.link)+'" target="_blank" rel="noopener" style="font-size:14px;font-weight:650;color:var(--text);display:block">'+esc(d.title)+'</a>'
+    +'<div style="margin-top:6px;font-size:12px;color:var(--accent)">'+esc(d.categories||'')+'</div>'
+    +'<div style="margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--muted)"><span>'+esc(d.dates||'')+'</span><span>'+esc(d.pub_date||'')+'</span><a href="'+esc(d.link)+'" target="_blank" rel="noopener" style="color:var(--accent)">Buka ↗</a></div>';
+  return a;
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// infinite scroll
+let obs=new IntersectionObserver(es=>{
+  if(es[0].isIntersecting && hasMore && !loading && curPN) fetchPage(curPage+1,false);
+},{rootMargin:'300px'});
+obs.observe(btnMore);
+</script>
+</x-layouts.base>
