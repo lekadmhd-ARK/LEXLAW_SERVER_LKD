@@ -10,8 +10,9 @@ class BrandingController extends Controller
 {
     public function edit(Request $request)
     {
-        $company = $request->user()->company;
-        $settings = $company->settings()->pluck('value', 'key')->toArray();
+        $company  = $request->user()->company;
+        $settings = $company->settings ?? [];
+
         return view('settings.branding', compact('company', 'settings'));
     }
 
@@ -31,31 +32,28 @@ class BrandingController extends Controller
             abort(403);
         }
 
+        $settings = $company->settings ?? [];
+
         if ($request->filled('name')) {
             $company->name = $request->input('name');
             $company->save();
         }
 
         if ($request->filled('primary_color')) {
-            $this->saveSetting($company->id, 'primary_color', $request->input('primary_color'));
+            $settings['primary_color'] = $request->input('primary_color');
         }
         if ($request->filled('accent_color')) {
-            $this->saveSetting($company->id, 'accent_color', $request->input('accent_color'));
+            $settings['accent_color'] = $request->input('accent_color');
         }
 
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('branding', 'public');
-            $this->saveSetting($company->id, 'logo_url', Storage::disk('public')->url($path));
+            $settings['logo_url'] = Storage::disk('public')->url($path);
         }
 
-        return back()->with('success', 'Branding berhasil diperbarui.');
-    }
+        $company->settings = $settings;
+        $company->save();
 
-    private function saveSetting(int $companyId, string $key, ?string $value): void
-    {
-        CompanySetting::updateOrCreate(
-            ['company_id' => $companyId, 'key' => $key],
-            ['value' => $value],
-        );
+        return back()->with('success', 'Branding berhasil diperbarui.');
     }
 }

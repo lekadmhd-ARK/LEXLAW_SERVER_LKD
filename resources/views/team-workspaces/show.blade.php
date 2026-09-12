@@ -42,11 +42,11 @@
     <!-- Tab Navigation -->
     <div style="display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:20px;flex-wrap:wrap">
         @php $currentTab = $tab; @endphp
-        <a href="{{ route('team-workspaces.show', ['workspace' => $w, 'tab' => 'members']) }}" class="btn {{ $currentTab === 'members' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Anggota</a>
-        <a href="{{ route('team-workspaces.show', ['workspace' => $w, 'tab' => 'documents']) }}" class="btn {{ $currentTab === 'documents' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Dokumen</a>
-        <a href="{{ route('team-workspaces.show', ['workspace' => $w, 'tab' => 'notes']) }}" class="btn {{ $currentTab === 'notes' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Catatan</a>
-        <a href="{{ route('team-workspaces.show', ['workspace' => $w, 'tab' => 'tasks']) }}" class="btn {{ $currentTab === 'tasks' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Tugas</a>
-        <a href="{{ route('team-workspaces.show', ['workspace' => $w, 'tab' => 'time']) }}" class="btn {{ $currentTab === 'time' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Waktu</a>
+        <a href="{{ route('team-workspaces.show', ['team_workspace' => $w, 'tab' => 'members']) }}" class="btn {{ $currentTab === 'members' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Anggota</a>
+        <a href="{{ route('team-workspaces.show', ['team_workspace' => $w, 'tab' => 'documents']) }}" class="btn {{ $currentTab === 'documents' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Dokumen</a>
+        <a href="{{ route('team-workspaces.show', ['team_workspace' => $w, 'tab' => 'notes']) }}" class="btn {{ $currentTab === 'notes' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Catatan</a>
+        <a href="{{ route('team-workspaces.show', ['team_workspace' => $w, 'tab' => 'tasks']) }}" class="btn {{ $currentTab === 'tasks' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Tugas</a>
+        <a href="{{ route('team-workspaces.show', ['team_workspace' => $w, 'tab' => 'time']) }}" class="btn {{ $currentTab === 'time' ? 'btn-primary' : 'btn-secondary' }}" style="border-radius:8px 8px 0 0;border-bottom:none">Waktu</a>
     </div>
 
     <!-- ======================== TAB: ANGGOTA ======================== -->
