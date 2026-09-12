@@ -60,7 +60,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLink'])->name('password.email');
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update.reset');
+    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('passwordupdatereset');
 });
 
 Route::match(['get', 'post'], '/logout', [LogoutController::class, '__invoke'])->middleware('auth')->name('logout');
@@ -102,10 +102,9 @@ Route::middleware('auth')->group(function () {
     Route::get('decisions/courts', [DecisionController::class, 'getCourts'])->name('decisions.courts');
     Route::get('decisions/categories', [DecisionController::class, 'getCategories'])->name('decisions.categories');
     Route::get('decisions/fetch', [DecisionController::class, 'fetchDecisions'])->name('decisions.fetch');
-    Route::post('regulations/fetch-jdih', [RegulationController::class, 'fetchFromJdihUrl'])->name('regulations.fetch-jdih')->middleware('throttle:30,1');
     Route::resource('regulation-contents', RegulationContentController::class)->only(['index', 'store', 'update']);
     Route::resource('legal-glossary', LegalGlossaryController::class);
-    Route::resource('consolidations', ConsolidationController::class)->only(['index', 'store', 'update']);
+    Route::resource('consolidations', ConsolidationController::class)->only(['index', 'create', 'store', 'update']);
     Route::resource('putusans', PutusanController::class)->only(['index', 'show']);
     Route::post('putusans/{putusan}/analyze', [PutusanController::class, 'analyze'])->name('putusans.analyze')->where('putusan', '[0-9]+');
     Route::resource('team-workspaces', TeamWorkspaceController::class);
