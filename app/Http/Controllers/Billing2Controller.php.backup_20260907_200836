@@ -1,0 +1,24 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+
+class Billing2Controller extends Controller
+{
+    public function __invoke(Request $request)
+    {
+        $company = $request->user()->company ?? null;
+        return view(billing.qris2, [
+            company => $company,
+            amount => null,
+            payloadDynamic => null,
+            qrCode => null,
+            orderId => null,
+        ]);
+    }
+
+    public function makeDynamic(Request $request)
+    {
+        $validated = $request->validate([
+            nominal => required

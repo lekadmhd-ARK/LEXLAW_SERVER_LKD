@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password', 'company_id', 'role', 'tenant_id'])]
@@ -66,5 +67,12 @@ class User extends Authenticatable
     public function company()
     {
         return $this->belongsTo(Company::class, 'company_id');
+    }
+
+    public function workspaceMemberships(): BelongsToMany
+    {
+        return $this->belongsToMany(TeamWorkspace::class, 'team_workspace_members', 'user_id', 'workspace_id')
+            ->withPivot('role', 'joined_at')
+            ->withTimestamps();
     }
 }

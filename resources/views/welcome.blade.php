@@ -304,8 +304,8 @@
             <div class="price-card">
                 <h3>Basic</h3>
                 <div class="plan-desc">Praktisi independen & freelancer</div>
-                <div class="price">Rp 100<span style="font-size:15px;color:var(--dim)">rb</span> <small>/bulan</small></div>
-                <div class="price-sub">atau Rp 1jt /tahun</div>
+                <div class="price">Rp 100.<span style="font-size:15px;color:var(--dim)">000</span> <small>/bulan</small></div>
+                <div class="price-sub">atau Rp 1.000.000 /tahun</div>
                 <ul class="features-list">
                     <li><i>✓</i> 1 user · Regulasi unlimited</li>
                     <li><i>✓</i> Lex Q&A — 30× /bulan</li>
@@ -321,8 +321,8 @@
                 <div class="badge-pop">★ Most Popular</div>
                 <h3>Professional</h3>
                 <div class="plan-desc">Firma hukum & konsultan UMKM</div>
-                <div class="price">Rp 599<span style="font-size:15px;color:var(--dim)">rb</span> <small>/bulan</small></div>
-                <div class="price-sub">atau Rp 5,99jt /tahun</div>
+                <div class="price">Rp 599.<span style="font-size:15px;color:var(--dim)">000</span> <small>/bulan</small></div>
+                <div class="price-sub">atau Rp 5.990.000 /tahun</div>
                 <ul class="features-list">
                     <li><i>✓</i> 10 users · Regulasi unlimited</li>
                     <li><i>✓</i> Lex Q&A — <b>Unlimited</b></li>
@@ -336,8 +336,8 @@
             <div class="price-card">
                 <h3>Enterprise</h3>
                 <div class="plan-desc">Korporasi & instansi besar</div>
-                <div class="price">Rp 999<span style="font-size:15px;color:var(--dim)">rb</span> <small>/bulan</small></div>
-                <div class="price-sub">atau Rp 9,99jt /tahun · Custom SLA</div>
+                <div class="price">Rp 999.<span style="font-size:15px;color:var(--dim)">000</span> <small>/bulan</small></div>
+                <div class="price-sub">atau Rp 9.990.000 /tahun · Custom SLA</div>
                 <ul class="features-list">
                     <li><i>✓</i> 50 users · Regulasi unlimited</li>
                     <li><i>✓</i> Lex Q&A — <b>Unlimited</b></li>

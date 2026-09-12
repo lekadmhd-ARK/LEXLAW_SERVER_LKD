@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Company;
 use App\Models\Plan;
 use App\Models\AuditLog;
@@ -12,6 +13,11 @@ class BillingController extends Controller
     public function __invoke(Request $request)
     {
         $company = $request->user()->company;
+
+        if (! $company) {
+            return redirect('/dashboard')->with('error', 'Akun Anda belum terhubung ke perusahaan. Silakan hubungi administrator.');
+        }
+
         return view('billing.index', compact('company'));
     }
 
@@ -22,16 +28,21 @@ class BillingController extends Controller
         ]);
 
         $company = $request->user()->company;
+
+        if (! $company) {
+            return redirect('/billing')->withErrors('Akun Anda belum terhubung ke perusahaan.');
+        }
+
         $plan = Plan::find($validated['plan_id']);
 
         if (!$plan) {
             return redirect('/billing')->withErrors('Plan not found.');
         }
 
-        // Placeholder: generate QRIS payment
-        // In production: call Midtrans API to create transaction + get QR code
-        $orderId = 'LAWLEX-' . $company->id . '-' . time();
         $amount = $plan->price_monthly > 0 ? $plan->price_monthly : 10000;
+        $orderId = 'LAWLEX-' . $company->id . '-' . time();
+
+        $qrisImage = $this->qrisImageForAmount($amount);
 
         AuditLog::create([
             'tenant_id' => $request->user()->tenant_id,
@@ -50,42 +61,70 @@ class BillingController extends Controller
             'plan' => $plan,
             'orderId' => $orderId,
             'amount' => $amount,
+            'qrisImage' => $qrisImage,
         ]);
     }
 
-    public function webhook(Request $request)
+    public function uploadProof(Request $request)
     {
-        // Placeholder: verify Midtrans webhook signature
-        $payload = $request->all();
+        $validated = $request->validate([
+            'proof' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+        ]);
 
-        if (isset($payload['order_id'])) {
-            // Update company subscription status
-            // In production: verify signature_header before processing
-            $company = Company::where('id', $payload['company_id'] ?? 0)->first();
-            if ($company) {
-                $company->update([
-                    'subscription_status' => 'active',
-                    'subscribed_until' => now()->addDays(30),
-                ]);
-            }
+        $company = $request->user()->company;
 
-            AuditLog::create([
-                'tenant_id' => $company?->tenant_id,
-                'action' => 'payment_webhook',
-                'subject_type' => 'Payment',
-                'new_values' => $payload,
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ]);
-
-            return response()->json(['status' => 'ok']);
+        if (! $company) {
+            return redirect('/billing')->withErrors('Akun Anda belum terhubung ke perusahaan.');
         }
 
-        return response()->json(['status' => 'ignored'], 200);
+        $path = $request->file('proof')->store('proofs', 'public');
+
+        AuditLog::create([
+            'tenant_id' => $request->user()->tenant_id,
+            'user_id' => $request->user()->id,
+            'user_name' => $request->user()->name,
+            'action' => 'payment_proof_uploaded',
+            'subject_type' => 'Company',
+            'subject_id' => $company->id,
+            'new_values' => [
+                'company_id' => $company->id,
+                'company_name' => $company->name,
+                'proof_path' => $path,
+            ],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return redirect('/billing')->with('success', 'Bukti pembayaran terkirim. Menunggu approval admin.');
     }
 
     public function success(Request $request)
     {
         return redirect('/billing')->with('success', 'Payment processed. Subscription updated.');
+    }
+
+    private function qrisImageForAmount($amount)
+    {
+        $amount = (int) $amount;
+        $available = [999000, 599000, 99000];
+
+        // 1) Eksak jika ada
+        if (in_array($amount, $available) && file_exists(public_path("paket_qris/qris_{$amount}.jpeg"))) {
+            return "/paket_qris/qris_{$amount}.jpeg";
+        }
+
+        // 2) Fallback: nominal tersedia terdekat (>= amount), biar QR tidak over-bayar
+        $best = null;
+        foreach ($available as $a) {
+            if (file_exists(public_path("paket_qris/qris_{$a}.jpeg")) && $a >= $amount && ($best === null || $a < $best)) {
+                $best = $a;
+            }
+        }
+        if ($best !== null) {
+            return "/paket_qris/qris_{$best}.jpeg";
+        }
+
+        // 3) Fallback terakhir: file static lama
+        return '/qris/qris_ark.jpeg';
     }
 }

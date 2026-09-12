@@ -157,6 +157,7 @@
             <nav class="sb-nav">
                 <a href="/dashboard" data-tip="Dashboard" class="{{ request()->is('dashboard') ? 'active' : '' }}"><span class="ic">📊</span><span class="txt">Dashboard</span></a>
                 <a href="/decisions" data-tip="Feeds Putusan" class="{{ request()->is('decisions*') ? 'active' : '' }}"><span class="ic">📰</span><span class="txt">Feeds Putusan</span></a>
+                <a href="/putusans" data-tip="Database Putusan" class="{{ request()->is('putusans*') ? 'active' : '' }}"><span class="ic">📜</span><span class="txt">Putusan</span></a>
                 <a href="/regulations" data-tip="Regulations" class="{{ request()->is('regulations*') ? 'active' : '' }}"><span class="ic">⚖️</span><span class="txt">Regulations</span></a>
                 <a href="/legal-glossary" data-tip="Glossary" class="{{ request()->is('legal-glossary*') ? 'active' : '' }}"><span class="ic">◇</span><span class="txt">Glossary</span></a>
                 <a href="/consolidations" data-tip="Consolidations" class="{{ request()->is('consolidations*') ? 'active' : '' }}"><span class="ic">◎</span><span class="txt">Consolidations</span></a>

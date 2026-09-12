@@ -43,11 +43,7 @@ class DashboardController extends Controller
             $resp = Http::timeout(3)->withHeaders([
                 'Authorization' => 'Bearer ' . $aiKey,
                 'Content-Type' => 'application/json',
-            ])->post(rtrim($aiUrl, '/') . '/chat/completions', [
-                'model' => config('services.ai.model', 'ARK'),
-                'messages' => [['role' => 'user', 'content' => 'ping']],
-                'max_tokens' => 1,
-            ]);
+            ])->get(rtrim($aiUrl, '/') . '/models');
             $latency = round((microtime(true) - $t0) * 1000);
             if ($resp->successful()) {
                 $aiStatus = 'active';

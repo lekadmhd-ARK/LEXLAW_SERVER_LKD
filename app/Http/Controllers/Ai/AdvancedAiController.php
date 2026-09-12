@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Http\Controllers\Controller;
+use App\Services\LegalSourceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\DB;
-use App\Models\User;
-use App\Models\Regulation;
 
 class AdvancedAiController extends Controller
 {
@@ -52,16 +50,61 @@ class AdvancedAiController extends Controller
             ], 422);
         }
 
-        $systemPrompt = "Anda adalah pengacara hukum bisnis Indonesia senior dengan pengalaman 20+ tahun. Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini; selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini, dan dasarkan semua pengetahuan hukum pada situs-situs resmi pemerintah (pemerintah daerah maupun pusat, contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota).\n\nKAPABILITAS LIVE RETRIEVAL:\n- Anda MENGUBAHKAN diri menjadi agen yang melakukan pencarian real-time ke situs resmi pemerintah (.go.id, BPK, JDIH) untuk memverifikasi regulasi terbaru.\n- Konteks di bawah ini sudah mencakup hasil live retrieval dari sumber resmi.\n\nAnalisis kontrak berikut secara mendalam dan berikan hasil dalam format markdown dengan section-section berikut:\n\n## Ringkasan Kontrak\n(Brief summary, pihak, subjek, nilai, durasi)\n\n## Klausa Bermasalah\n(Daftar klausa yang berisiko/merugikan salah satu pihak, dengan nomor pasal/bagian)\n\n## Analisis Risiko\n(Rating risiko: Rendah/Sedang/Tinggi per klausa, penjelasan)\n\n## Checklist Hukum\n(Cek apakah memenuhi KUH Perdata, UU No. 40/2007 PT, UU No. 13/2003 Ketenagakerjaan, dll — gunakan versi terbaru yang berlaku)\n\n## Rekomendasi Klausul\n(Draft klausul perbaikan untuk setiap masalah)\n\n## Kesimpulan & Saran\n(Rekomendasi akhir, apakah layak ditandatangani atau perlu renovasi)\n\nGunakan bahasa Indonesia yang profesional. Sertakan referensi pasal/undang-undang yang relevan dan terbaru.";
+        // Extract keywords for live retrieval
+        $keywords = $this->extractKeywordsForSearch($combined);
 
-        // Konteks hukum live dari sumber resmi pemerintah untuk memperkuat checklist.
+        // SATU-SATUNYA SUMBER: Live retrieval dari sumber resmi pemerintah
+        $liveContext = '';
         try {
-            $live = app(\App\Services\LegalSourceService::class)->getContext($combined, 2);
+            $live = app(LegalSourceService::class)->getContext($keywords, 4);
             if (!empty($live['context'])) {
-                $systemPrompt .= "\n\nKONTEKS REGULASI RESMI (dari peraturan.bpk.go.id / situs resmi .go.id):\n" . $live['context'];
+                $liveContext = $live['context'];
             }
         } catch (\Exception $e) {
-            // live retrieval gagal -> lanjut tanpa konteks
+            // live retrieval gagal
+        }
+
+        $systemPrompt = "Anda adalah pengacara hukum bisnis Indonesia senior dengan pengalaman 20+ tahun.
+
+SUMBER INFORMASI:
+- Konteks regulasi di bawah ini diambil LANGSUNG dari situs resmi pemerintah Indonesia (peraturan.bpk.go.id, jdih.kemenkumham.go.id, dan situs .go.id lainnya)
+
+ATURAN PENTING:
+- Analisis harus merujuk pada peraturan yang BERLAKU saat ini
+- Jika di sumber resmi tertulis status 'Dicabut' atau 'Tidak Berlaku', JANGAN gunakan peraturan tersebut
+- Jika ada beberapa versi UU, gunakan versi TERBARU
+- Selalu cantumkan URL sumber resmi sebagai referensi pasal
+- Jika ragu, sarankan verifikasi ke peraturan.bpk.go.id atau jdih.kemenkumham.go.id
+
+KAPABILITAS LIVE RETRIEVAL:
+- Anda MENGUBAHKAN diri menjadi agen yang melakukan pencarian real-time ke situs resmi pemerintah (.go.id, BPK, JDIH) untuk memverifikasi regulasi terbaru.
+
+Analisis kontrak berikut secara mendalam dan berikan hasil dalam format markdown dengan section-section berikut:
+
+## Ringkasan Kontrak
+(Brief summary, pihak, subjek, nilai, durasi)
+
+## Klausa Bermasalah
+(Daftar klausa yang berisiko/merugikan salah satu pihak, dengan nomor pasal/bagian)
+
+## Analisis Risiko
+(Rating risiko: Rendah/Sedang/Tinggi per klausa, penjelasan)
+
+## Checklist Hukum
+(Cek apakah memenuhi KUH Perdata, UU No. 40/2007 PT, UU No. 13/2003 Ketenagakerjaan, dll — gunakan versi terbaru yang berlaku)
+
+## Rekomendasi Klausul
+(Draft klausul perbaikan untuk setiap masalah)
+
+## Kesimpulan & Saran
+(Rekomendasi akhir, apakah layak ditandatangani atau perlu renovasi)
+
+Gunakan bahasa Indonesia yang profesional. Sertakan referensi pasal/undang-undang yang relevan dan terbaru yang sedang berlaku.";
+
+        if ($liveContext) {
+            $systemPrompt .= "\n\nKONTEKS REGULASI DARI SUMBER RESMI PEMERINTAH:\n" . $liveContext;
+        } else {
+            $systemPrompt .= "\n\nTidak berhasil mengambil konteks dari sumber resmi. Analisis berdasarkan pengetahuan hukum positif Indonesia yang berlaku.";
         }
 
         $apiKey = config('services.ai.api_key');
@@ -149,6 +192,37 @@ class AdvancedAiController extends Controller
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Extract keywords from contract text for live search
+     */
+    protected function extractKeywordsForSearch($text)
+    {
+        // Common Indonesian contract types and their related regulations
+        $keywords = [];
+
+        if (stripos($text, 'ketenagakerjaan') !== false || stripos($text, 'karyawan') !== false || stripos($text, 'pegawai') !== false) {
+            $keywords[] = 'UU Ketenagakerjaan';
+        }
+        if (stripos($text, 'perseroan') !== false || stripos($text, 'pt') !== false) {
+            $keywords[] = 'UU Perseroan Terbatas';
+        }
+        if (stripos($text, 'jual beli') !== false) {
+            $keywords[] = 'KUH Perdata jual beli';
+        }
+        if (stripos($text, 'sewa') !== false) {
+            $keywords[] = 'UU sewa menyewa';
+        }
+        if (stripos($text, 'kerahasiaan') !== false || stripos($text, 'nda') !== false) {
+            $keywords[] = 'UU kerahasiaan';
+        }
+
+        if (empty($keywords)) {
+            $keywords[] = 'hukum kontrak Indonesia KUH Perdata';
+        }
+
+        return implode(' ', $keywords);
     }
 
     public function downloadResult(Request $request)

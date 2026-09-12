@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ai;
 
 use App\Http\Controllers\Controller;
+use App\Services\LegalSourceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class DraftController extends Controller
         $effectiveDate = $validated['effective_date'] ?? null;
         $variantCount = (int) ($validated['variant_count'] ?? 1);
 
-        // Regulasi relevan dari DB sebagai acuan pasal hukum positif Indonesia
+        // SATU-SATUNYA SUMBER: Live retrieval dari sumber resmi pemerintah
         $context = $this->fetchRegulationContext($instructions);
 
         $label = $this->getDocumentLabel($documentType);
@@ -62,7 +63,22 @@ class DraftController extends Controller
 
     protected function generateDraft($label, $date, $instructions, $context, $style)
     {
-        $base = "Anda adalah Senior Legal Drafter Indonesia yang sangat berpengalaman (Corporate Lawyer / Notaris). Buatlah draf dokumen hukum yang profesional, rinci, dan sesuai HUKUM POSITIF INDONESIA yang berlaku saat ini.\n\nPENGETAHUAN AI:\n- Pengetahuan Anda TIDAK terbatas pada data regulasi di database aplikasi ini saja.\n- Selalu up-to-date dengan seluruh peraturan perundang-undangan Indonesia (pusat dan daerah) yang berlaku sampai saat ini.\n- Dasarkan semua pengetahuan hukum pada situs-situs resmi pemerintah, baik pemerintah daerah maupun pemerintah pusat (contoh: peraturan.go.id, jdih.kemenkumham.go.id, peraturan.bpk.go.id, serta JDIH provinsi/kabupaten/kota).\n- Referensi hukum wajib dicantumkan sesuai peraturan terbaru yang berlaku.\n\nKAPABILITAS LIVE RETRIEVAL:\n- Anda MENGUBAHKAN diri menjadi agen yang melakukan pencarian real-time ke situs resmi pemerintah (.go.id, BPK, JDIH) untuk memverifikasi regulasi terbaru.\n- Konteks di bawah ini sudah mencakup hasil live retrieval dari sumber resmi.\n\n";
+        $base = "Anda adalah Senior Legal Drafter Indonesia yang sangat berpengalaman (Corporate Lawyer / Notaris). Buatlah draf dokumen hukum yang profesional, rinci, dan sesuai HUKUM POSITIF INDONESIA yang berlaku saat ini.
+
+SUMBER INFORMASI:
+- Referensi hukum di bawah ini diambil LANGSUNG dari situs resmi pemerintah Indonesia (peraturan.bpk.go.id, jdih.kemenkumham.go.id, dan situs .go.id lainnya)
+
+ATURAN PENTING:
+- Draf harus merujuk pada peraturan yang BERLAKU saat ini
+- Jika di sumber resmi tertulis status 'Dicabut' atau 'Tidak Berlaku', JANGAN gunakan peraturan tersebut
+- Jika ada beberapa versi UU, gunakan versi TERBARU
+- Selalu cantumkan URL sumber resmi sebagai referensi
+- Jika ragu, sarankan verifikasi ke peraturan.bpk.go.id atau jdih.kemenkumham.go.id
+
+KAPABILITAS LIVE RETRIEVAL:
+- Anda MENGUBAHKAN diri menjadi agen yang melakukan pencarian real-time ke situs resmi pemerintah (.go.id, BPK, JDIH) untuk memverifikasi regulasi terbaru.
+
+";
 
         $gaya = "GAYA PENULISAN: " . $style['desc'] . ".\n";
 
@@ -93,7 +109,7 @@ class DraftController extends Controller
             . "- JANGAN gunakan Markdown (** **). Gunakan <strong> untuk penebalan.\n\n";
 
         $systemPrompt = $base . $gaya . "\n" . $struktur . $html
-            . ($context ? "REFERENSI HUKUM DARI DATABASE:\n" . $context . "\n" : "")
+            . ($context ? "REFERENSI HUKUM DARI SUMBER RESMI PEMERINTAH:\n" . $context . "\n" : "Tidak berhasil mengambil referensi dari sumber resmi. Buat draf berdasarkan pengetahuan hukum positif Indonesia yang berlaku.\n")
             . "JENIS DOKUMEN: " . $label . "\n"
             . "TANGGAL EFEKTIF: " . $date . "\n"
             . "INSTRUKSI / KASUS: " . $instructions;
@@ -122,53 +138,19 @@ class DraftController extends Controller
         }
     }
 
+    /**
+     * SATU-SATUNYA SUMBER: Live retrieval dari sumber resmi pemerintah
+     */
     protected function fetchRegulationContext($instructions)
     {
         $context = "";
         try {
-            $driver = DB::getDriverName();
-            if ($driver === 'pgsql') {
-                $regs = DB::select("
-                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
-                    FROM regulation_contents rc
-                    JOIN regulations r ON r.id = rc.regulation_id
-                    WHERE to_tsvector('english', coalesce(rc.content, '')) @@ plainto_tsquery(?)
-                    OR r.title LIKE ?
-                    LIMIT 5
-                ", [$instructions, "%$instructions%"]);
-            } elseif ($driver === 'mysql') {
-                $regs = DB::select("
-                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
-                    FROM regulation_contents rc
-                    JOIN regulations r ON r.id = rc.regulation_id
-                    WHERE MATCH(rc.content) AGAINST(? IN NATURAL LANGUAGE MODE)
-                    OR r.title LIKE ?
-                    LIMIT 5
-                ", [$instructions, "%$instructions%"]);
-            } else {
-                $regs = DB::select("
-                    SELECT r.title, r.number, r.year, r.category, rc.article_number, rc.content
-                    FROM regulation_contents rc
-                    JOIN regulations r ON r.id = rc.regulation_id
-                    WHERE rc.content LIKE ?
-                    OR r.title LIKE ?
-                    LIMIT 5
-                ", ["%$instructions%", "%$instructions%"]);
-            }
-
-            foreach ($regs as $r) {
-                $context .= "- {$r->category} No. {$r->number}/{$r->year} - {$r->title}, Pasal {$r->article_number}: " . substr($r->content, 0, 400) . "\n";
-            }
-
-            // Tambah konteks live dari sumber resmi pemerintah bila konteks DB tipis.
-            if (strlen($context) < 600) {
-                $live = app(\App\Services\LegalSourceService::class)->getContext($instructions, 2);
-                if (!empty($live['context'])) {
-                    $context .= "\n--- KONTEKS LANGSUNG DARI SUMBER RESMI PEMERINTAH (live retrieval) ---\n" . $live['context'] . "\n";
-                }
+            $live = app(LegalSourceService::class)->getContext($instructions, 5);
+            if (!empty($live['context'])) {
+                $context = $live['context'];
             }
         } catch (\Exception $e) {
-            // table mungkin belum ada / fulltext index belum di-setup
+            // live retrieval gagal
         }
         return $context;
     }
@@ -227,7 +209,6 @@ class DraftController extends Controller
         $text = preg_replace('/\*\*(.*?)\*\*/s', '<strong>$1</strong>', $text);
         $text = preg_replace('/^#+\s+(.+)$/m', '<h3 align="center">$1</h3>', $text);
         $text = trim($text);
-        // basic paragraph split (baris kosong jadi <p>)
         $text = preg_replace('/\n\s*\n/', "</p><p>", $text);
         $text = "<p>" . $text . "</p>";
         return $text;

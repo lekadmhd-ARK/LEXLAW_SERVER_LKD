@@ -44,16 +44,6 @@
                                         @foreach($paragraphs as $paragraph)
                                             <p style="margin-bottom:8px;text-indent:16px">{{ trim($paragraph) }}</p>
                                         @endforeach
-                                        @if(!empty($lastSources) && $loop->last)
-                                            <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:12px;color:var(--text-muted)">
-                                                <div style="font-weight:600;margin-bottom:4px">📚 Sumber Resmi:</div>
-                                                @foreach($lastSources as $src)
-                                                    <div style="margin-bottom:2px;word-break:break-all">
-                                                        🔗 <a href="{{ $src['url'] }}" target="_blank" rel="noopener" style="color:var(--accent)">{{ $src['title'] }}</a>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @endif
                                     </div>
                                 </div>
                             </div>
