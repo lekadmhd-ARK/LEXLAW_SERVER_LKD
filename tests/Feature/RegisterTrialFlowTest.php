@@ -248,6 +248,143 @@ class RegisterTrialFlowTest extends TestCase
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('newpassword456', $user->password));
     }
 
+    public function test_workspace_tab_urls_redirect_not_405(): void
+    {
+        $company = Company::create([
+            'tenant_id'           => Str::uuid()->toString(),
+            'name'                => 'Tab Co',
+            'slug'                => 'tab-' . Str::random(4),
+            'subscription_status' => 'trialing',
+            'trial_ends_at'       => now()->addDays(3),
+        ]);
+        $user = $this->verifyUser(User::create([
+            'name'              => 'Tab Owner',
+            'email'             => 'tab-' . Str::uuid()->toString() . '@example.com',
+            'password'          => bcrypt('password123'),
+            'tenant_id'         => $company->tenant_id,
+            'company_id'        => $company->id,
+            'role'              => 'owner',
+        ]));
+        $workspace = TeamWorkspace::create([
+            'tenant_id'  => $company->tenant_id,
+            'company_id' => $company->id,
+            'name'       => 'CASE TAB',
+            'created_by' => $user->id,
+            'is_active'  => true,
+        ]);
+        $workspace->members()->attach($user->id, ['role' => 'owner', 'joined_at' => now()]);
+
+        foreach ([
+            'members' => 'members',
+            'documents' => 'documents',
+            'notes' => 'notes',
+            'tasks' => 'tasks',
+            'time-entries' => 'time',
+        ] as $path => $tab) {
+            $this->actingAs($user)
+                 ->get("/team-workspaces/{$workspace->id}/$path")
+                 ->assertRedirect("/team-workspaces/{$workspace->id}?tab=$tab");
+        }
+    }
+
+    public function test_workspace_member_email_baru_dibuat_dan_diundang(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+
+        $company = Company::create([
+            'tenant_id'           => Str::uuid()->toString(),
+            'name'                => 'Invite Co',
+            'slug'                => 'inv-' . Str::random(4),
+            'subscription_status' => 'trialing',
+            'trial_ends_at'       => now()->addDays(3),
+        ]);
+        $user = $this->verifyUser(User::create([
+            'name'              => 'Invite Owner',
+            'email'             => 'inv-' . Str::uuid()->toString() . '@example.com',
+            'password'          => bcrypt('password123'),
+            'tenant_id'         => $company->tenant_id,
+            'company_id'        => $company->id,
+            'role'              => 'owner',
+        ]));
+        $workspace = TeamWorkspace::create([
+            'tenant_id'  => $company->tenant_id,
+            'company_id' => $company->id,
+            'name'       => 'CASE INV',
+            'created_by' => $user->id,
+            'is_active'  => true,
+        ]);
+        $workspace->members()->attach($user->id, ['role' => 'owner', 'joined_at' => now()]);
+
+        $email = 'anggota-' . Str::uuid()->toString() . '@example.com';
+
+        $this->actingAs($user)
+             ->post("/team-workspaces/{$workspace->id}/members", [
+                 'email' => $email,
+                 'role'  => 'admin',
+             ])
+             ->assertSessionHasNoErrors()
+             ->assertStatus(302);
+
+        $this->assertDatabaseHas('users', ['email' => $email, 'tenant_id' => $company->tenant_id, 'role' => 'admin']);
+        $this->assertDatabaseHas('team_workspace_members', [
+            'workspace_id' => $workspace->id,
+            'user_id'      => User::where('email', $email)->first()->id,
+        ]);
+        \Illuminate\Support\Facades\Mail::assertQueued(\App\Mail\TeamInviteMail::class);
+    }
+
+    public function test_workspace_member_email_perusahaan_lain_ditolak(): void
+    {
+        $companyA = Company::create([
+            'tenant_id'           => Str::uuid()->toString(),
+            'name'                => 'Company A',
+            'slug'                => 'ca-' . Str::random(4),
+            'subscription_status' => 'trialing',
+            'trial_ends_at'       => now()->addDays(3),
+        ]);
+        $companyB = Company::create([
+            'tenant_id'           => Str::uuid()->toString(),
+            'name'                => 'Company B',
+            'slug'                => 'cb-' . Str::random(4),
+            'subscription_status' => 'trialing',
+            'trial_ends_at'       => now()->addDays(3),
+        ]);
+        $owner = $this->verifyUser(User::create([
+            'name'              => 'Owner A',
+            'email'             => 'a-' . Str::uuid()->toString() . '@example.com',
+            'password'          => bcrypt('password123'),
+            'tenant_id'         => $companyA->tenant_id,
+            'company_id'        => $companyA->id,
+            'role'              => 'owner',
+        ]));
+        $orangB = $this->verifyUser(User::create([
+            'name'              => 'Orang B',
+            'email'             => 'b-' . Str::uuid()->toString() . '@example.com',
+            'password'          => bcrypt('password123'),
+            'tenant_id'         => $companyB->tenant_id,
+            'company_id'        => $companyB->id,
+            'role'              => 'owner',
+        ]));
+        $workspace = TeamWorkspace::create([
+            'tenant_id'  => $companyA->tenant_id,
+            'company_id' => $companyA->id,
+            'name'       => 'CASE ISO',
+            'created_by' => $owner->id,
+            'is_active'  => true,
+        ]);
+        $workspace->members()->attach($owner->id, ['role' => 'owner', 'joined_at' => now()]);
+
+        $this->actingAs($owner)
+             ->post("/team-workspaces/{$workspace->id}/members", [
+                 'email' => $orangB->email,
+                 'role'  => 'member',
+             ])
+             ->assertStatus(302)
+             ->assertSessionHas('error', 'Email tersebut sudah terdaftar dan merupakan bagian dari perusahaan lain. Anggota harus bergabung ke perusahaan Anda.');
+
+        $this->assertDatabaseMissing('team_workspace_members', ['workspace_id' => $workspace->id, 'user_id' => $orangB->id]);
+    }
+
     public function test_workspace_nested_actions_do_not_500(): void
     {
         $company = Company::create([

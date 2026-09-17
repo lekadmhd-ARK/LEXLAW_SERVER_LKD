@@ -107,6 +107,7 @@
                 <div>
                     <label class="label">Email</label>
                     <input type="email" name="email" required placeholder="email@kantor-hukum.id">
+                    <div style="font-size:11px;color:var(--muted);margin-top:4px">Belum punya akun? Akan dibuat otomatis dan diundang lewat email.</div>
                 </div>
                 <div>
                     <label class="label">Role</label>

@@ -18,6 +18,7 @@ use App\Http\Controllers\SuperAdmin\PlanController;
 use App\Http\Controllers\SuperAdmin\AnalyticsController;
 use App\Http\Controllers\SuperAdmin\AuthActivityController;
 use App\Http\Controllers\DecisionController;
+use App\Models\TeamWorkspace;
 use App\Http\Controllers\RegulationController;
 use App\Http\Controllers\RegulationContentController;
 use App\Http\Controllers\LegalGlossaryController;
@@ -181,6 +182,11 @@ Route::middleware(['auth', 'twofactor', 'company.active', 'trial'])->group(funct
         Route::resource('team-workspaces', TeamWorkspaceController::class);
         // Workspace nested features (dibungkus middleware tenant workspace)
         Route::middleware('workspace.tenant')->group(function () {
+            Route::get('team-workspaces/{workspace}/members', fn (TeamWorkspace $workspace) => redirect()->route('team-workspaces.show', ['team_workspace' => $workspace, 'tab' => 'members']))->name('workspace-members.index');
+            Route::get('team-workspaces/{workspace}/documents', fn (TeamWorkspace $workspace) => redirect()->route('team-workspaces.show', ['team_workspace' => $workspace, 'tab' => 'documents']))->name('workspace-documents.index');
+            Route::get('team-workspaces/{workspace}/notes', fn (TeamWorkspace $workspace) => redirect()->route('team-workspaces.show', ['team_workspace' => $workspace, 'tab' => 'notes']))->name('workspace-notes.index');
+            Route::get('team-workspaces/{workspace}/tasks', fn (TeamWorkspace $workspace) => redirect()->route('team-workspaces.show', ['team_workspace' => $workspace, 'tab' => 'tasks']))->name('workspace-tasks.index');
+            Route::get('team-workspaces/{workspace}/time-entries', fn (TeamWorkspace $workspace) => redirect()->route('team-workspaces.show', ['team_workspace' => $workspace, 'tab' => 'time']))->name('workspace-time.index');
             Route::post('team-workspaces/{workspace}/members', [WorkspaceMemberController::class, 'store'])->name('workspace-members.store');
             Route::patch('team-workspaces/{workspace}/members/{user}', [WorkspaceMemberController::class, 'update'])->name('workspace-members.update');
             Route::delete('team-workspaces/{workspace}/members/{user}', [WorkspaceMemberController::class, 'destroy'])->name('workspace-members.destroy');

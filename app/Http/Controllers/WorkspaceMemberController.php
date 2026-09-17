@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\TeamInviteMail;
 use App\Models\TeamWorkspace;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class WorkspaceMemberController extends Controller
 {
@@ -12,14 +16,45 @@ class WorkspaceMemberController extends Controller
     public function store(Request $request, TeamWorkspace $workspace)
     {
         $validated = $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email|max:255',
             'role'  => 'required|in:' . implode(',', array_keys(TeamWorkspace::MEMBER_ROLES)),
         ]);
 
-        $user = User::where('email', $validated['email'])->where('tenant_id', $request->user()->tenant_id)->first();
+        $email  = mb_strtolower(trim($validated['email']));
+        $role   = $validated['role'];
+
+        // Cari ke seluruh sistem (tanpa distorsi scope tenant) supaya kita bisa
+        // membedakan "email milik perusahaan lain" vs "belum punya akun sama sekali".
+        $user = User::where('email', $email)->first();
+
+        if ($user && $user->tenant_id !== $request->user()->tenant_id) {
+            return back()->with('error', 'Email tersebut sudah terdaftar dan merupakan bagian dari perusahaan lain. Anggota harus bergabung ke perusahaan Anda.');
+        }
 
         if (!$user) {
-            return back()->with('error', 'User tidak ditemukan di tenant Anda.');
+            if ($role === 'owner') {
+                $role = 'admin';
+            }
+
+            $user = User::create([
+                'name'       => ucfirst(substr(explode('@', $email)[0], 0, 40)),
+                'email'      => $email,
+                'password'   => bcrypt(Str::random(40)),
+                'tenant_id'  => $request->user()->tenant_id,
+                'company_id' => $request->user()->company_id,
+                'role'       => $role,
+            ]);
+
+            try {
+                Mail::to($user->email)->send(new TeamInviteMail(
+                    $user,
+                    $workspace,
+                    TeamWorkspace::MEMBER_ROLES[$role],
+                    $request->user()->company?->name ?? 'Perusahaan Anda',
+                ));
+            } catch (\Throwable $e) {
+                Log::warning('Invite email failed for user: ' . $user->email . ' — ' . $e->getMessage());
+            }
         }
 
         if ($workspace->members()->where('user_id', $user->id)->exists()) {
@@ -27,11 +62,11 @@ class WorkspaceMemberController extends Controller
         }
 
         $workspace->members()->attach($user->id, [
-            'role'      => $validated['role'],
+            'role'      => $role,
             'joined_at' => now(),
         ]);
 
-        return back()->with('success', "{$user->name} berhasil ditambahkan sebagai " . TeamWorkspace::MEMBER_ROLES[$validated['role']] . ".");
+        return back()->with('success', "{$user->name} berhasil ditambahkan sebagai " . TeamWorkspace::MEMBER_ROLES[$role] . ".");
     }
 
     public function update(Request $request, TeamWorkspace $workspace, User $user)
