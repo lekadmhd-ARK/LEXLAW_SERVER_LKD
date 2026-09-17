@@ -141,13 +141,11 @@
         @endif
 
         <button type="button"
-                class="btn-delete"
-                onclick="deleteOpen({
-                  id: {{ $company->id }},
-                  name: @json($company->name),
-                  tenant: @json($company->tenant_id),
-                  users: {{ $company->users->count() }}
-                })"
+                class="btn-delete js-delete-open"
+                data-id="{{ $company->id }}"
+                data-name="{{ $company->name }}"
+                data-tenant="{{ $company->tenant_id }}"
+                data-users="{{ $company->users->count() }}"
                 title="Hapus permanen client ini dari database">🗑 Hapus</button>
       </td>
     </tr>
@@ -249,10 +247,20 @@ function deleteSync() {
   var ok = document.getElementById('dl-input').value.trim() === deleteState.name;
   document.getElementById('dl-confirm').disabled = !ok;
 }
-document.getElementById('dl-input').addEventListener('input', deleteSync);
 function deleteClose() {
   document.getElementById('dl-overlay').hidden = true;
 }
+document.querySelectorAll('.js-delete-open').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    deleteOpen({
+      id: parseInt(this.dataset.id, 10),
+      name: this.dataset.name,
+      tenant: this.dataset.tenant,
+      users: parseInt(this.dataset.users, 10)
+    });
+  });
+});
+document.getElementById('dl-input').addEventListener('input', deleteSync);
 document.getElementById('dl-overlay').addEventListener('click', function (e) {
   if (e.target.id === 'dl-overlay') deleteClose();
 });
