@@ -10,12 +10,21 @@ return new class extends Migration
     {
         // Data regulasi bersifat publik & harus unik per judul (case-insensitive).
         // Bersihkan duplikat existing yang tersisa sebelum menambah unique index.
-        DB::statement("
-            DELETE FROM regulations a
-            USING regulations b
-            WHERE a.id > b.id
-              AND lower(trim(a.title)) = lower(trim(b.title))
-        ");
+        if (Schema::getConnection()->getDriverName() === 'pgsql') {
+            DB::statement("
+                DELETE FROM regulations a
+                USING regulations b
+                WHERE a.id > b.id
+                  AND lower(trim(a.title)) = lower(trim(b.title))
+            ");
+        } else {
+            DB::statement("
+                DELETE FROM regulations
+                WHERE id NOT IN (
+                    SELECT MIN(id) FROM regulations GROUP BY lower(trim(title))
+                )
+            ");
+        }
 
         DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS regulations_lower_title_unique ON regulations (lower(trim(title)))');
     }

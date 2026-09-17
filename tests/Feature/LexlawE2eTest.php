@@ -14,6 +14,24 @@ use App\Services\LegalSourceService;
 // Test non-destruktif: memakai data produksi yang ada, tidak mem-wipe DB.
 class LexlawE2eTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Hanya bisa dijalankan saat data produksi tersedia (admin + plan).
+        // Di CI / SQLite (tanpa seed) seluruh suite ini di-skip, bukan gagal.
+        try {
+            $hasSeed = User::where('email', 'admin@lexlaw.id')->exists()
+                && Plan::count() > 0;
+        } catch (\Throwable) {
+            $hasSeed = false;
+        }
+
+        if (!$hasSeed) {
+            $this->markTestSkipped('Data produksi (admin@lexlaw.id & plans) tidak tersedia — skip E2E suite.');
+        }
+    }
+
     private function user(): User
     {
         return User::where('email', 'admin@lexlaw.id')->first();

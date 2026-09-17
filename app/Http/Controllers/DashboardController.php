@@ -24,8 +24,8 @@ class DashboardController extends Controller
         $perdaCount = Regulation::where('hierarchy_level', '5')->count();
 
         // Count glossary
-        $glossaryCount = class_exists('\App\Models\LegalGlossary') 
-            ? LegalGlossary::where('tenant_id', $tenantId)->count() 
+        $glossaryCount = class_exists('\App\Models\LegalGlossary')
+            ? LegalGlossary::where('tenant_id', $tenantId)->count()
             : 0;
 
         // 5 Regulasi Terbaru (global)
@@ -56,6 +56,57 @@ class DashboardController extends Controller
             $aiStatus = 'offline';
         }
 
+        // Onboarding checklist
+        $onboarding = [];
+        $onboardingDone = false;
+        $company = $user->company;
+        if ($company && (string) $user->role !== '1') {
+            $settings = $company->settings ?? [];
+            $dismissed = $settings['onboarding_dismissed_at'] ?? null;
+
+            $steps = [
+                'verify' => [
+                    'label' => 'Verifikasi email',
+                    'url' => route('verification.notice'),
+                    'done' => $user->hasVerifiedEmail(),
+                    'hint' => 'Cek inbox untuk link verifikasi',
+                ],
+                'logo' => [
+                    'label' => 'Pasang logo perusahaan',
+                    'url' => route('branding.edit'),
+                    'done' => !empty($company->logo_url),
+                    'hint' => 'Edit branding & logo',
+                ],
+                'profil' => [
+                    'label' => 'Lengkapi profil perusahaan',
+                    'url' => route('branding.edit'),
+                    'done' => !empty($company->address) && !empty($company->phone),
+                    'hint' => 'Alamat & telepon',
+                ],
+                'workspace' => [
+                    'label' => 'Buat ruang kerja tim',
+                    'url' => route('team-workspaces.index'),
+                    'done' => $company->workspaces()->count() > 0,
+                    'hint' => 'Kolonaborasi tim',
+                ],
+                'regulasi' => [
+                    'label' => 'Simpan regulasi pertama',
+                    'url' => url('/regulations'),
+                    'done' => Regulation::where('tenant_id', $company->tenant_id)->exists(),
+                    'hint' => 'Import dari BPK/JDIH',
+                ],
+            ];
+
+            $doneCount = collect($steps)->filter(fn ($s) => $s['done'])->count();
+
+            $i = 1;
+            foreach ($steps as $key => $step) {
+                $onboarding[] = ['index' => $i++, ...$step];
+            }
+
+            $onboardingDone = $dismissed !== null || $doneCount === count($steps);
+        }
+
         return view('dashboard', compact(
             'user',
             'totalRegs',
@@ -67,7 +118,9 @@ class DashboardController extends Controller
             'glossaryCount',
             'latestRegs',
             'aiStatus',
-            'aiStatusColor'
+            'aiStatusColor',
+            'onboarding',
+            'onboardingDone'
         ));
     }
 }

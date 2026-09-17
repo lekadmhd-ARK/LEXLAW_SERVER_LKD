@@ -11,16 +11,20 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Permission\Traits\HasRoles;
+use App\Notifications\ResetPasswordNotification;
+use App\Notifications\VerifyEmailNotification;
+use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
-#[Fillable(['name', 'email', 'password', 'company_id', 'role', 'tenant_id'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail, FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable, HasRoles, MustVerifyEmailTrait;
 
     protected $fillable = [
-        'name', 'email', 'password', 'company_id', 'role', 'tenant_id',
+        'name', 'email', 'password', 'company_id', 'role', 'tenant_id', 'two_factor_enabled',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -31,7 +35,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'tenant_id' => 'string',
+            'two_factor_enabled' => 'boolean',
         ];
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification());
+    }
+
+    public function sendPasswordResetNotification(#[SensitiveParameter] $token): void
+    {
+        $this->notify(new ResetPasswordNotification(
+            $token,
+            config("auth.passwords." . config("auth.defaults.passwords") . ".expire", 60),
+        ));
     }
 
     public static function roleEnum(): array
@@ -74,5 +92,10 @@ class User extends Authenticatable
         return $this->belongsToMany(TeamWorkspace::class, 'team_workspace_members', 'user_id', 'workspace_id')
             ->withPivot('role', 'joined_at')
             ->withTimestamps();
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $panel->getId() === 'admin' && (string) $this->role === '1';
     }
 }

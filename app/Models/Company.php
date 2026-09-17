@@ -17,6 +17,7 @@ class Company extends Model
         'tenant_id', 'name', 'slug', 'plan_id',
         'address', 'phone', 'logo_url',
         'subscription_status', 'trial_ends_at', 'subscribed_until', 'settings',
+        'quota_qna', 'quota_draft', 'quota_contract_review', 'quota_validity', 'quota_reset_at',
     ];
 
     protected $casts = [
@@ -24,6 +25,7 @@ class Company extends Model
         'trial_ends_at' => 'datetime',
         'subscribed_until' => 'datetime',
         'plan_id' => 'integer',
+        'quota_reset_at' => 'datetime',
     ];
 
     public function plan(): BelongsTo

@@ -13,8 +13,9 @@ class AuditLogController extends Controller
         return view('audit-logs.index', compact('items'));
     }
 
-    public function show(AuditLog $auditLog)
+    public function show(Request $request, AuditLog $auditLog)
     {
+        abort_unless($auditLog->tenant_id === $request->user()->tenant_id, 403);
         return view('audit-logs.index', ['items' => collect([$auditLog])]);
     }
 }

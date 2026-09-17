@@ -555,6 +555,7 @@ class RegulationController extends Controller
 
     public function update(Request $request, Regulation $regulation)
     {
+        abort_unless($regulation->tenant_id === $request->user()->tenant_id, 403);
         $validated = $request->validate([
             'title' => 'required|max:255',
             'number' => 'nullable|max:100',
@@ -590,8 +591,9 @@ class RegulationController extends Controller
         return redirect("/regulations/{$regulation->id}")->with('success', 'Regulasi berhasil diperbarui.');
     }
 
-    public function destroy(Regulation $regulation)
+    public function destroy(Request $request, Regulation $regulation)
     {
+        abort_unless($regulation->tenant_id === $request->user()->tenant_id, 403);
         $regulation->delete();
         return redirect('/regulations')->with('success', 'Regulasi berhasil dihapus.');
     }
@@ -743,8 +745,9 @@ class RegulationController extends Controller
      * Re-fetch data regulasi dari sumber aslinya (BPK/JDIH)
      * Digunakan untuk mengupdate detail naskah dan metadata yang kurang lengkap.
      */
-    public function refetchFromBpk(Regulation $regulation)
+    public function refetchFromBpk(Request $request, Regulation $regulation)
     {
+        abort_unless($regulation->tenant_id === $request->user()->tenant_id, 403);
         $url = $regulation->source_url;
         if (!$url) {
             return back()->with('error', 'URL sumber tidak tersedia untuk regulasi ini.');

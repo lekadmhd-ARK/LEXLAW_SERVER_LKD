@@ -72,16 +72,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('legal_glossaries', function (Blueprint $table) {
-            $table->id();
-            $table->string('tenant_id')->index();
-            $table->string('term');
-            $table->text('definition');
-            $table->string('category')->nullable();
-            $table->json('cross_references')->nullable();
-            $table->timestamps();
-        });
-
         Schema::create('consolidations', function (Blueprint $table) {
             $table->id();
             $table->string('tenant_id')->index();

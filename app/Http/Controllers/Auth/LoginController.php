@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Notifications\TwoFactorCodeNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
@@ -22,6 +24,27 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+
+            $user = Auth::user();
+
+            if ($user->two_factor_enabled) {
+                $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+                cache()->put(
+                    '2fa:' . $user->id,
+                    ['code' => Hash::make($code), 'expires_at' => now()->addMinutes(10)],
+                    now()->addMinutes(10)
+                );
+
+                try {
+                    $user->notify(new TwoFactorCodeNotification($code));
+                } catch (\Throwable $e) {
+                    // email gagal — kode tetap tersimpan, user bisa minta kirim ulang
+                }
+
+                return redirect()->route('two-factor.form');
+            }
+
             return redirect()->intended('/dashboard');
         }
 

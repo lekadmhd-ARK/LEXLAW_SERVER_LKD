@@ -110,7 +110,7 @@ class LegalSourceServiceTest extends TestCase
         Cache::flush();
 
         $srv = new LegalSourceService();
-        $key = 'legalsrc_search_' . md5('permendagri no. 1 tahun 2026');
+        $key = 'legalsrc_search_v2_' . md5(mb_strtolower(trim('Permendagri No. 1 Tahun 2026')));
 
         $this->assertNull(Cache::get($key));
         $this->assertIsArray($srv->search('Permendagri No. 1 Tahun 2026'));

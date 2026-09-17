@@ -175,6 +175,8 @@ Gunakan bahasa Indonesia yang profesional. Sertakan referensi pasal/undang-undan
 
             $uid = 'LEX-CR-' . date('Ymd') . '-' . strtoupper(substr(md5(uniqid()), 0, 6));
 
+            \App\Http\Middleware\CheckQuota::incrementQuota($request->user()->company, 'contract_review');
+
             return response()->json([
                 'success' => true,
                 'uid' => $uid,

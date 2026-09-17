@@ -13,8 +13,9 @@ class UserController extends Controller
         return view('users.index', compact('items'));
     }
 
-    public function show(User $user)
+    public function show(Request $request, User $user)
     {
+        abort_unless($user->tenant_id === $request->user()->tenant_id, 403);
         return view('users.index', ['items' => collect([$user])]);
     }
 }

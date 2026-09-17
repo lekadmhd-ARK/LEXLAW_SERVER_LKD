@@ -5,7 +5,34 @@
         <div>
             <div class="eyebrow">🛡️ Keamanan</div>
             <h1 class="page-title">Keamanan Akun</h1>
-            <p class="page-desc">Kelola session aktif dan lihat riwayat login</p>
+            <p class="page-desc">Kelola autentikasi dua langkah, session aktif, dan riwayat login</p>
+        </div>
+    </div>
+
+    <!-- Two-Factor Authentication -->
+    <div class="card" style="max-width:800px;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div>
+                <h3 style="font-size:16px;font-weight:600">Autentikasi Dua Langkah (2FA)</h3>
+                <p style="font-size:13px;color:var(--muted);margin-top:4px;max-width:520px">
+                    Melindungi akun dengan kode OTP yang dikirim ke email saat login.
+                    Disarankan untuk role Owner &amp; Admin.
+                </p>
+            </div>
+            <span style="padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;background:{{ auth()->user()->two_factor_enabled ? '#22c55e20' : '#6b728020' }};color:{{ auth()->user()->two_factor_enabled ? '#22c55e' : '#6b7280' }}">
+                {{ auth()->user()->two_factor_enabled ? 'Aktif' : 'Nonaktif' }}
+            </span>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px">
+            @if(auth()->user()->two_factor_enabled)
+            <form method="POST" action="{{ route('security.two-factor.disable') }}" onsubmit="return confirm('Nonaktifkan autentikasi dua langkah?')">@csrf
+                <button type="submit" class="btn btn-secondary" style="border-color:#ef4444;color:#ef4444">Nonaktifkan</button>
+            </form>
+            @else
+            <form method="POST" action="{{ route('security.two-factor.enable') }}">@csrf
+                <button type="submit" class="btn btn-primary">Aktifkan</button>
+            </form>
+            @endif
         </div>
     </div>
 

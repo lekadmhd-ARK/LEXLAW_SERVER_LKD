@@ -7,6 +7,7 @@ use App\Services\LegalSourceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use App\Http\Middleware\CheckQuota;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 
@@ -52,6 +53,10 @@ class DraftController extends Controller
             }
         } else {
             $drafts = [$this->generateDraft($label, $date, $instructions, $context, $styles[0])];
+        }
+
+        if (!empty($drafts)) {
+            CheckQuota::incrementQuota($request->user()->company, 'draft');
         }
 
         return view('ai.draft', [

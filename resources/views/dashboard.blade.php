@@ -15,6 +15,32 @@
             </div>
         </div></div>
 
+        {{-- ONBOARDING CHECKLIST --}}
+        @if(!empty($onboarding) && !$onboardingDone)
+        <div style="border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin-bottom:24px;background:var(--bg2)">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+                <div>
+                    <div style="font-size:15px;font-weight:700;color:var(--text)">🚀 Siapkan perusahaan Anda</div>
+                    <div style="font-size:13px;color:var(--muted);margin-top:2px">Selesaikan langkah berikut untuk pengalaman terbaik.</div>
+                </div>
+                <form method="POST" action="{{ route('onboarding.dismiss') }}">@csrf
+                    <button type="submit" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px">Sembunyikan ✕</button>
+                </form>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
+                @foreach($onboarding as $step)
+                <a href="{{ $step['url'] }}" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;border:1px solid var(--line);text-decoration:none;background:var(--bg)">
+                    <span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;background:{{ $step['done'] ? '#22c55e' : '#f59e0b' }}">{{ $step['done'] ? '✓' : $step['index'] }}</span>
+                    <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--text)">{{ $step['label'] }}</div>
+                        <div style="font-size:11px;color:{{ $step['done'] ? '#22c55e' : 'var(--muted)' }}">{{ $step['done'] ? 'Selesai' : $step['hint'] }}</div>
+                    </div>
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         {{-- STAT CARDS --}}
         <div class="grid-4" style="margin-bottom:24px">
             <div class="card stat">

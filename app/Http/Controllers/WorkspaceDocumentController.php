@@ -50,6 +50,7 @@ class WorkspaceDocumentController extends Controller
 
     public function download(TeamWorkspace $workspace, WorkspaceDocument $document)
     {
+        abort_unless($document->workspace_id === $workspace->id, 403);
         if (!Storage::disk('local')->exists($document->file_path)) {
             abort(404, 'File tidak ditemukan.');
         }
@@ -58,6 +59,7 @@ class WorkspaceDocumentController extends Controller
 
     public function destroy(Request $request, TeamWorkspace $workspace, WorkspaceDocument $document)
     {
+        abort_unless($document->workspace_id === $workspace->id, 403);
         if (Storage::disk('local')->exists($document->file_path)) {
             Storage::disk('local')->delete($document->file_path);
         }

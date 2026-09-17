@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Notifications\TwoFactorCodeNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class SecurityController extends Controller
 {
@@ -52,6 +55,50 @@ class SecurityController extends Controller
         return back()->with('success', 'Semua session lain berhasil dicabut.');
     }
 
+    public function enableTwoFactor(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->two_factor_enabled) {
+            return back()->with('error', 'Autentikasi dua langkah sudah aktif.');
+        }
+
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        cache()->put(
+            '2fa:' . $user->id,
+            ['code' => Hash::make($code), 'expires_at' => now()->addMinutes(10)],
+            now()->addMinutes(10)
+        );
+
+        $user->update(['two_factor_enabled' => true]);
+        $request->session()->forget('2fa_passed');
+
+        try {
+            $user->notify(new TwoFactorCodeNotification($code));
+        } catch (\Throwable $e) {
+            Log::warning('2FA enable email failed for user: ' . $user->email . ' — ' . $e->getMessage());
+        }
+
+        return redirect()->route('two-factor.form')
+            ->with('status', 'Autentikasi dua langkah diaktifkan. Masukkan kode yang dikirim ke email untuk menyelesaikan aktivasi.');
+    }
+
+    public function disableTwoFactor(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->two_factor_enabled) {
+            return back()->with('error', 'Autentikasi dua langkah tidak aktif.');
+        }
+
+        $user->update(['two_factor_enabled' => false]);
+        cache()->forget('2fa:' . $user->id);
+        $request->session()->put('2fa_passed', true);
+
+        return back()->with('success', 'Autentikasi dua langkah berhasil dinonaktifkan.');
+    }
+
     private function parseUserAgent(string $ua): string
     {
         $browser = 'Unknown';
@@ -62,11 +109,11 @@ class SecurityController extends Controller
 
         $os = 'Unknown';
         if (str_contains($ua, 'Windows')) $os = 'Windows';
-        elseif (str_contains($ua, 'Mac OS')) $os = 'macOS';
-        elseif (str_contains($ua, 'Linux')) $os = 'Linux';
         elseif (str_contains($ua, 'Android')) $os = 'Android';
         elseif (str_contains($ua, 'iPhone')) $os = 'iOS';
+        elseif (str_contains($ua, 'Macintosh')) $os = 'macOS';
+        elseif (str_contains($ua, 'Linux')) $os = 'Linux';
 
-        return "{$browser} di {$os}";
+        return $browser . ' / ' . $os;
     }
 }

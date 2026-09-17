@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -21,10 +22,10 @@ class RegisterController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'max:255'],
+            'name' => ['required', 'max' => 255],
             'email' => ['required', 'email', 'unique:users'],
             'password' => ['required', 'confirmed'],
-            'company_name' => ['required', 'max:255'],
+            'company_name' => ['required', 'max' => 255],
         ]);
 
         $tenantId = Str::uuid()->toString();
@@ -47,8 +48,20 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        Mail::to($user->email)->send(new WelcomeMail($user));
+        try {
+            Mail::to($user->email)->send(new WelcomeMail($user));
+        } catch (\Throwable $e) {
+            Log::warning('Welcome email failed for user: ' . $user->email . ' — ' . $e->getMessage());
+        }
 
-        return redirect('/dashboard');
+        // Kirim link verifikasi email (via queue)
+        try {
+            $user->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            Log::warning('Verification email failed for user: ' . $user->email . ' — ' . $e->getMessage());
+        }
+
+        return redirect('/dashboard')
+            ->with('status', 'Akun berhasil dibuat. Silakan verifikasi email Anda untuk menggunakan fitur lengkap.');
     }
 }

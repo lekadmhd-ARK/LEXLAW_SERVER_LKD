@@ -13,6 +13,22 @@
         </div>
     </form>
 
+    @php
+    $trialCompany = auth()->user()?->company;
+    $trialActive = $trialCompany && $trialCompany->subscription_status === 'trialing';
+    $trialDaysLeft = $trialActive && $trialCompany->trial_ends_at
+        ? max(1, (int) ceil(now()->diffInDays($trialCompany->trial_ends_at)))
+        : 0;
+    @endphp
+    @if($trialActive)
+    <div style="padding:12px 14px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);margin-bottom:16px;font-size:12px;line-height:1.5">
+        🔄 <b>Masa Trial</b><br>
+        <span style="color:var(--muted)">Sisa <b style="color:#f59e0b">{{ $trialDaysLeft }} hari</b> ·
+        berakhir {{ $trialCompany->trial_ends_at->format('d M Y') }}</span><br>
+        <a href="{{ route('billing') }}" style="color:#f59e0b;font-weight:600">Pilih paket & berlangganan →</a>
+    </div>
+    @endif
+
     <nav style="display:flex;flex-direction:column;gap:4px">
         <!-- Main Navigation -->
         <a href="/dashboard" class="nav-link {{ $active === 'dashboard' ? 'active' : '' }}">📊 Dashboard</a>

@@ -26,4 +26,4 @@ Salam,
 
 ---
 
-Untuk bantuan atau pertanyaan, hubungi kami di [support@arktech.id](mailto:support@arktech.id) atau via [WhatsApp](https://wa.me/6281297414115).
+Untuk bantuan atau pertanyaan, hubungi kami di [support@lexlaw.arktech.id](mailto:support@lexlaw.arktech.id) atau via [WhatsApp](https://wa.me/6281297414115).

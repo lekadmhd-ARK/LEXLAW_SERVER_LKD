@@ -8,6 +8,7 @@ use App\Models\Putusan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use App\Http\Middleware\CheckQuota;
 
 class LexQnaController extends Controller
 {
@@ -101,6 +102,10 @@ ATURAN PENTING:
             $answer = $response->json('choices.0.message.content') ?? 'Maaf, gagal mendapatkan jawaban dari AI.';
         } catch (\Exception $e) {
             $answer = 'Error: ' . $e->getMessage();
+        }
+
+        if (!str_starts_with($answer, 'Error') && !str_contains($answer, 'gagal mendapatkan jawaban')) {
+            CheckQuota::incrementQuota($request->user()->company, 'qna');
         }
 
         $history = session('lexqna_history', []);

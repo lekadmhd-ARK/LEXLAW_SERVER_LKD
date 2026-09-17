@@ -25,11 +25,13 @@ return new class extends Migration
             $table->jsonb('cross_references')->nullable();
             $table->timestamps();
         });
-        // pg_trgm for fuzzy search (create extension first)
-        DB::statement("CREATE EXTENSION IF NOT EXISTS pg_trgm");
-        // Full-text GIN index
-        DB::statement("CREATE INDEX idx_glossary_term_trgm ON legal_glossaries USING gin (term gin_trgm_ops)");
-        DB::statement("CREATE INDEX idx_glossary_singkatan_trgm ON legal_glossaries USING gin (singkatan gin_trgm_ops)");
+        if (Schema::getConnection()->getDriverName() === 'pgsql') {
+            // pg_trgm for fuzzy search (create extension first)
+            DB::statement("CREATE EXTENSION IF NOT EXISTS pg_trgm");
+            // Full-text GIN index
+            DB::statement("CREATE INDEX idx_glossary_term_trgm ON legal_glossaries USING gin (term gin_trgm_ops)");
+            DB::statement("CREATE INDEX idx_glossary_singkatan_trgm ON legal_glossaries USING gin (singkatan gin_trgm_ops)");
+        }
     }
 
     public function down(): void

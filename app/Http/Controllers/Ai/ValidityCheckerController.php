@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\LegalSourceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Http\Middleware\CheckQuota;
 
 class ValidityCheckerController extends Controller
 {
@@ -55,6 +56,8 @@ class ValidityCheckerController extends Controller
 
         // 4. Analisis AI keaktifan berdasarkan sumber resmi
         $aiAnalysis = $this->analyzeRegulations($citations);
+
+        CheckQuota::incrementQuota($request->user()->company, 'validity');
 
         return view('ai.validity-checker', [
             'results' => $results,

@@ -7,6 +7,9 @@
   </div>
 </div>
 
+@if(session('error'))
+<div style="padding:12px 16px;border-radius:8px;background:#ef444420;color:#ef4444;border:1px solid #ef444440;margin-bottom:16px">{{ session('error') }}</div>
+@endif
 @if(session('success'))
 <div style="padding:12px 16px;border-radius:8px;background:#22c55e20;color:#22c55e;border:1px solid #22c55e40;margin-bottom:16px">{{ session('success') }}</div>
 @endif

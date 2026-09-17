@@ -154,6 +154,21 @@
                 <span class="sb-logo"><span class="grad">⚖️ LEXLAW</span> v2</span>
                 <button class="sb-toggle" id="sbToggle" title="Sembunyikan menu" aria-label="Toggle sidebar">→</button>
             </div>
+            @php
+            $trialCompany = auth()->user()?->company;
+            $trialActive = $trialCompany && $trialCompany->subscription_status === 'trialing';
+            $trialDaysLeft = $trialActive && $trialCompany->trial_ends_at
+                ? max(1, (int) ceil(now()->diffInDays($trialCompany->trial_ends_at)))
+                : 0;
+            @endphp
+            @if($trialActive)
+            <div style="padding:10px 12px;margin:8px 6px;border-radius:10px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);font-size:11.5px;line-height:1.5">
+                <b>🔄 Masa Trial</b><br>
+                <span style="color:var(--muted)">Sisa <b style="color:#f59e0b">{{ $trialDaysLeft }} hari</b> · berakhir {{ $trialCompany->trial_ends_at ? $trialCompany->trial_ends_at->format('d M Y') : '—' }}</span><br>
+                <a href="{{ route('billing') }}" style="color:#f59e0b;font-weight:600">Pilih paket →</a>
+            </div>
+            @endif
+
             <nav class="sb-nav">
                 <a href="/dashboard" data-tip="Dashboard" class="{{ request()->is('dashboard') ? 'active' : '' }}"><span class="ic">📊</span><span class="txt">Dashboard</span></a>
                 <a href="/decisions" data-tip="Feeds Putusan" class="{{ request()->is('decisions*') ? 'active' : '' }}"><span class="ic">📰</span><span class="txt">Feeds Putusan</span></a>

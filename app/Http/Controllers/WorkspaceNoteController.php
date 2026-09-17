@@ -38,6 +38,7 @@ class WorkspaceNoteController extends Controller
 
     public function update(Request $request, TeamWorkspace $workspace, WorkspaceNote $note)
     {
+        abort_unless($note->workspace_id === $workspace->id, 403);
         $validated = $request->validate([
             'title'   => 'required|max:255',
             'content' => 'required',
@@ -50,6 +51,7 @@ class WorkspaceNoteController extends Controller
 
     public function destroy(Request $request, TeamWorkspace $workspace, WorkspaceNote $note)
     {
+        abort_unless($note->workspace_id === $workspace->id, 403);
         $note->delete();
         return back()->with('success', 'Catatan berhasil dihapus.');
     }

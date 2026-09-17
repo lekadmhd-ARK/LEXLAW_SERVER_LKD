@@ -45,6 +45,7 @@ class WorkspaceTaskController extends Controller
 
     public function update(Request $request, TeamWorkspace $workspace, WorkspaceTask $task)
     {
+        abort_unless($task->workspace_id === $workspace->id, 403);
         $validated = $request->validate([
             'title'        => 'sometimes|max:255',
             'description'  => 'sometimes|nullable',
@@ -67,12 +68,14 @@ class WorkspaceTaskController extends Controller
 
     public function destroy(Request $request, TeamWorkspace $workspace, WorkspaceTask $task)
     {
+        abort_unless($task->workspace_id === $workspace->id, 403);
         $task->delete();
         return back()->with('success', 'Tugas berhasil dihapus.');
     }
 
     public function toggleStatus(Request $request, TeamWorkspace $workspace, WorkspaceTask $task)
     {
+        abort_unless($task->workspace_id === $workspace->id, 403);
         $task->status = $task->status === 'done' ? 'todo' : 'done';
         $task->completed_at = $task->status === 'done' ? now() : null;
         $task->save();

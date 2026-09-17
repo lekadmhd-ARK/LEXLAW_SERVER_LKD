@@ -475,6 +475,8 @@
                 <button class="link-btn" onclick="openModal('disclaimer')">Disclaimer</button> · 
                 <button class="link-btn" onclick="openModal('terms')">Syarat & Ketentuan</button> · 
                 <button class="link-btn" onclick="openModal('refund')">Refund Policy</button> · 
+                <a href="/privacy-policy" style="text-decoration:underline">Kebijakan Privasi</a> · 
+                <a href="/data-processing-agreement" style="text-decoration:underline">DPA</a> · 
                 <a href="https://wa.me/6281297414115" target="_blank">Kontak WA</a>
             </div>
         </div>

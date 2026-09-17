@@ -52,6 +52,7 @@ class WorkspaceTimeEntryController extends Controller
 
     public function destroy(Request $request, TeamWorkspace $workspace, WorkspaceTimeEntry $entry)
     {
+        abort_unless($entry->workspace_id === $workspace->id, 403);
         $entry->delete();
         return back()->with('success', 'Entry waktu berhasil dihapus.');
     }
