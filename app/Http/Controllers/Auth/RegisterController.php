@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Mail\WelcomeMail;
+use App\Models\AuthActivity;
 use App\Models\User;
 use App\Models\Company;
 use Illuminate\Http\Request;
@@ -22,10 +23,10 @@ class RegisterController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'max' => 255],
+            'name' => ['required', 'max:255'],
             'email' => ['required', 'email', 'unique:users'],
             'password' => ['required', 'confirmed'],
-            'company_name' => ['required', 'max' => 255],
+            'company_name' => ['required', 'max:255'],
         ]);
 
         $tenantId = Str::uuid()->toString();
@@ -47,6 +48,8 @@ class RegisterController extends Controller
         ]);
 
         Auth::login($user);
+
+        AuthActivity::record('register', $user, ip: $request->ip(), userAgent: $request->userAgent());
 
         try {
             Mail::to($user->email)->send(new WelcomeMail($user));

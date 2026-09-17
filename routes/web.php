@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\DeviceInfoController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\VerificationController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\SupportController;
 use App\Http\Controllers\SuperAdmin\PlanController;
 use App\Http\Controllers\SuperAdmin\AnalyticsController;
+use App\Http\Controllers\SuperAdmin\AuthActivityController;
 use App\Http\Controllers\DecisionController;
 use App\Http\Controllers\RegulationController;
 use App\Http\Controllers\RegulationContentController;
@@ -91,6 +93,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/2fa', [TwoFactorController::class, 'form'])->name('two-factor.form');
     Route::post('/2fa', [TwoFactorController::class, 'verify'])->name('two-factor.verify')->middleware('throttle:10,1');
     Route::post('/2fa/resend', [TwoFactorController::class, 'resend'])->name('two-factor.resend')->middleware('throttle:3,10');
+
+    Route::post('/auth/device-info', DeviceInfoController::class)->name('auth.device-info');
 });
 
 // Authenticated
@@ -109,6 +113,7 @@ Route::middleware(['auth', 'twofactor', 'company.active', 'trial'])->group(funct
     // Super Admin
     Route::middleware('superadmin')->group(function () {
     Route::get('/super-admin/analytics', AnalyticsController::class)->name('super-admin.analytics');
+    Route::get('/super-admin/auth-activities', [AuthActivityController::class, 'index'])->name('super-admin.auth-activities');
     Route::get('/super-admin/plans', [PlanController::class, 'index'])->name('super-admin.plans');
     Route::get("/super-admin/plans/edit", [PlanController::class, "editAllPrices"])->name("super-admin.plans.edit");
     Route::put("/super-admin/plans/edit", [PlanController::class, "updateAllPrices"])->name("super-admin.plans.update");

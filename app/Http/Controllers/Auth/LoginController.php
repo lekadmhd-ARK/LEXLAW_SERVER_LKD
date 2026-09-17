@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuthActivity;
 use App\Notifications\TwoFactorCodeNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,6 +28,8 @@ class LoginController extends Controller
 
             $user = Auth::user();
 
+            AuthActivity::record('login', $user, ip: $request->ip(), userAgent: $request->userAgent());
+
             if ($user->two_factor_enabled) {
                 $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
@@ -47,6 +50,8 @@ class LoginController extends Controller
 
             return redirect()->intended('/dashboard');
         }
+
+        AuthActivity::record('login_failed', email: $credentials['email'], ip: $request->ip(), userAgent: $request->userAgent());
 
         return back()->withErrors(['email' => 'Invalid credentials.'])->onlyInput('email');
     }
