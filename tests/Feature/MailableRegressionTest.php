@@ -57,7 +57,13 @@ class MailableRegressionTest extends TestCase
         );
 
         $this->assertStringContainsString('Pembayaran Berhasil', $mail->envelope()->subject);
-        $this->assertStringContainsString('INV-REG-001', $mail->render());
+
+        $html = $mail->render();
+        $this->assertStringContainsString('INV-REG-001', $html);
+        // Reggresi: pastikan nama perusahaan tampil, BUKAN dump objek Company
+        $this->assertStringContainsString($company->name, $html);
+        $this->assertStringNotContainsString('tenant_id', $html);
+        $this->assertStringNotContainsString('subscription_status', $html);
         $this->assertInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class, $mail);
     }
 

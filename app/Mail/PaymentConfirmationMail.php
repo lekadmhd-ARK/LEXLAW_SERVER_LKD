@@ -36,7 +36,7 @@ class PaymentConfirmationMail extends Mailable implements ShouldQueue
         return new Content(
             markdown: 'mail.payment-confirmation',
             with: [
-                'company'          => $this->company->name,
+                'company_name'     => $this->company->name,
                 'plan'             => $this->company->plan?->name ?? 'LEXLAW Pro',
                 'invoice'          => $this->invoice,
                 'amount'           => number_format($this->amount, 0, ',', '.'),

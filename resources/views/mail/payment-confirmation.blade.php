@@ -20,7 +20,7 @@
 <table width="100%" cellpadding="0" cellspacing="0">
 <tr><td style="padding:28px 36px">
 
-<p style="font-size:15px;color:#1a1a2e;margin:0 0 20px">Halo <strong>{{ $company }}</strong>,</p>
+<p style="font-size:15px;color:#1a1a2e;margin:0 0 20px">Halo <strong>{{ $company_name }}</strong>,</p>
 <p style="font-size:14px;color:#4a4a68;line-height:1.6;margin:0 0 24px">Terima kasih! Pembayaran Anda telah berhasil diterima. Langganan LEXLAW Anda kini aktif dan siap digunakan.</p>
 
 <!-- Invoice Card -->
@@ -38,7 +38,7 @@
     </tr>
     <tr>
         <td style="color:#787c85;padding:4px 0">Perusahaan</td>
-        <td style="color:#1a1a2e;font-weight:600;padding:4px 0">{{ $company }}</td>
+        <td style="color:#1a1a2e;font-weight:600;padding:4px 0">{{ $company_name }}</td>
     </tr>
     <tr>
         <td style="color:#787c85;padding:4px 0">Paket</td>
