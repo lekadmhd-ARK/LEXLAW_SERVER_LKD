@@ -28,7 +28,14 @@ class TwoFactorController extends Controller
         $key = '2fa:' . $user->id;
         $stored = cache()->get($key);
 
-        if (!$stored || $stored['expires_at'] < now()->getTimestamp() || !Hash::check($request->code, $stored['code'])) {
+        // Guard: tolak cache corrupt/stale (mis. nilai serialisasi lama tanpa Carbon)
+        // agar tidak menimbulkan 500, cukup anggap kode salah.
+        $valid = is_array($stored)
+            && isset($stored['code'], $stored['expires_at'])
+            && is_int($stored['expires_at'])
+            && $stored['expires_at'] >= now()->getTimestamp();
+
+        if (!$valid || !Hash::check($request->code, $stored['code'])) {
             return back()->withErrors(['code' => 'Kode salah atau sudah kedaluwarsa.']);
         }
 

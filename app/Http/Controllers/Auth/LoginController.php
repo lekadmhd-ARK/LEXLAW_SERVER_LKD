@@ -35,7 +35,7 @@ class LoginController extends Controller
 
                 cache()->put(
                     '2fa:' . $user->id,
-                    ['code' => Hash::make($code), 'expires_at' => now()->addMinutes(10)],
+                    ['code' => Hash::make($code), 'expires_at' => now()->addMinutes(10)->getTimestamp()],
                     now()->addMinutes(10)
                 );
 
