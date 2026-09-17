@@ -30,10 +30,9 @@ class VerifyEmailNotification extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject('Verifikasi Email — LEXLAW')
-            ->greeting('Halo ' . $notifiable->name . ',')
-            ->line('Terima kasih telah mendaftar di LEXLAW.')
-            ->line('Klik tombol di bawah untuk memverifikasi alamat email Anda. Link berlaku 60 menit.')
-            ->action('Verifikasi Email', $url)
-            ->line('Jika Anda tidak mendaftar, abaikan email ini.');
+            ->markdown('mail.verify-email', [
+                'name' => $notifiable->name,
+                'url' => $url,
+            ]);
     }
 }

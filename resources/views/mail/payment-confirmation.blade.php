@@ -1,6 +1,13 @@
 <div style="font-family:'Helvetica Neue',Arial,sans-serif;background:#f4f6f9;padding:0;margin:0">
 <div style="max-width:600px;margin:0 auto;background:#ffffff">
 
+<!-- Logo -->
+<table width="100%" cellpadding="0" cellspacing="0">
+<tr><td style="padding:24px 36px 0;text-align:center">
+    <img src="{{ asset('images/ll_logo.png') }}" alt="LEXLAW" width="140" style="max-width:180px;height:auto;border-radius:8px">
+</td></tr>
+</table>
+
 <!-- Header -->
 <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#5e6ad2,#7c3aed);border-radius:12px 12px 0 0">
 <tr><td style="padding:32px 36px 24px">
@@ -101,6 +108,9 @@
         Ada pertanyaan terkait pembayaran?<br>
         Hubungi <a href="mailto:support@lexlaw.arktech.id" style="color:#5e6ad2;text-decoration:none">support@lexlaw.arktech.id</a>
         atau <a href="https://wa.me/6281297414115" style="color:#5e6ad2;text-decoration:none">Chat via WhatsApp</a>
+    </p>
+    <p style="font-size:11px;color:#c0c4cc;margin:0">
+        LEXLAW — product by https://arktech.id/
     </p>
     <p style="font-size:11px;color:#c0c4cc;margin:0">
         © 2026 LEXLAW — by ARKTech · Layanan hukum digital terpadu

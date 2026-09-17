@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LEXLAW v2 — Legal Intelligence & SaaS Platform</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="64x64" href="/images/favicon.png">
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -172,7 +175,7 @@
 <body>
     <header class="nav">
         <a href="/" class="brand">
-            <div class="logo">⚖</div>
+            <div class="logo" style="background:none;box-shadow:none;width:auto;height:auto;border-radius:0"><img src="/images/ll_logo_sm.png" alt="LEXLAW" style="height:34px;width:auto;border-radius:8px"></div>
             <div><b>LEXLAW v2</b> <span>Legal Intelligence</span></div>
         </a>
         <nav class="nav-links">

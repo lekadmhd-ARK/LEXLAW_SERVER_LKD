@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title }} - LEXLAW v2</title>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="64x64" href="/images/favicon.png">
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -145,13 +148,13 @@
     <div class="layout">
         <div class="mobile-header">
             <button class="mobile-hamburger" id="mobileHamburger">☰</button>
-            <span class="mobile-logo">⚖️ LEXLAW v2</span>
+            <span class="mobile-logo"><img src="/images/ll_logo_sm.png" alt="LEXLAW" style="height:22px;width:auto;border-radius:5px;vertical-align:middle"> LEXLAW v2</span>
         </div>
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <div class="sidebar" id="sidebar">
             <div class="sb-header">
-                <span class="sb-logo"><span class="grad">⚖️ LEXLAW</span> v2</span>
+                <span class="sb-logo"><img src="/images/ll_logo_sm.png" alt="LEXLAW" style="height:26px;width:auto;border-radius:6px;vertical-align:middle"> <b>LEXLAW</b> v2</span>
                 <button class="sb-toggle" id="sbToggle" title="Sembunyikan menu" aria-label="Toggle sidebar">→</button>
             </div>
             @php

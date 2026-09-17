@@ -1,3 +1,7 @@
+<div style="text-align:center;padding:6px 0 2px">
+    <img src="{{ asset('images/ll_logo.png') }}" alt="LEXLAW" width="150" style="max-width:180px;height:auto;border-radius:8px">
+</div>
+
 # Selamat Datang di LEXLAW, {{ $name }}!
 
 Akun Anda **berhasil dibuat** dan siap digunakan.
@@ -23,6 +27,8 @@ Terima kasih telah bergabung!
 
 Salam,  
 **Tim LEXLAW**
+
+**LEXLAW — product by [https://arktech.id/](https://arktech.id/)**
 
 ---
 

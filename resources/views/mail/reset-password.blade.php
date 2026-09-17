@@ -1,3 +1,7 @@
+<div style="text-align:center;padding:6px 0 2px">
+    <img src="{{ asset('images/ll_logo.png') }}" alt="LEXLAW" width="150" style="max-width:180px;height:auto;border-radius:8px">
+</div>
+
 # Reset Password — LEXLAW
 
 Halo {{ $name }},
@@ -16,5 +20,7 @@ Jika Anda tidak merasa mengajukan permintaan ini, abaikan email ini — password
 
 Terima kasih,
 **Tim LEXLAW**
+
+**LEXLAW — product by [https://arktech.id/](https://arktech.id/)**
 
 Untuk bantuan, hubungi [support@lexlaw.arktech.id](mailto:support@lexlaw.arktech.id) atau via [WhatsApp](https://wa.me/6281297414115).
