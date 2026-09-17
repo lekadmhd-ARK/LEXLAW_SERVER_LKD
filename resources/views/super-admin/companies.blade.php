@@ -210,6 +210,7 @@
 .btn.btn-danger:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
 
 .dl-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px; }
+.dl-overlay[hidden] { display:none; }
 .dl-modal {
   background:var(--bg); border:1px solid var(--line); border-radius:14px; width:100%; max-width:440px;
   box-shadow:0 20px 50px rgba(0,0,0,.35); overflow:hidden;
