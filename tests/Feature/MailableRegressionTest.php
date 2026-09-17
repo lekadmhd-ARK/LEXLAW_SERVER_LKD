@@ -10,6 +10,7 @@ use App\Notifications\DeadlineReminderNotification;
 use App\Notifications\DocumentUploadedNotification;
 use App\Notifications\MemberAddedNotification;
 use App\Notifications\TaskAssignedNotification;
+use App\Notifications\VerifyEmailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -69,11 +70,17 @@ class MailableRegressionTest extends TestCase
 
     public function test_welcome_mail_compiles_and_is_queued(): void
     {
-        ['user' => $user] = $this->makeCompanyAndUser();
+        ['company' => $company, 'user' => $user] = $this->makeCompanyAndUser();
 
         $mail = new WelcomeMail($user);
 
-        $this->assertStringContainsString('Selamat Datang', $mail->render());
+        $html = $mail->render();
+        $this->assertStringContainsString('Selamat Datang', $html);
+        // HTML murni, bukan markdown mentah
+        $this->assertStringContainsString($company->name, $html);
+        $this->assertStringNotContainsString('**', $html);
+        $this->assertStringNotContainsString('---', $html);
+        $this->assertStringNotContainsString('# ', $html);
         $this->assertInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class, $mail);
     }
 
@@ -93,5 +100,22 @@ class MailableRegressionTest extends TestCase
                 $class . ' must implement ShouldQueue'
             );
         }
+    }
+
+    public function test_verify_email_notification_uses_html_view(): void
+    {
+        ['user' => $user] = $this->makeCompanyAndUser();
+
+        $notification = new VerifyEmailNotification();
+        $message = $notification->toMail($user);
+
+        $this->assertStringContainsString('Verifikasi Email', $message->subject);
+        $this->assertSame('mail.verify-email', $message->view);
+
+        // view() → render mailer; HTML murni, bukan markdown mentah
+        $html = $message->render();
+        $this->assertStringContainsString('Verifikasi Email', $html);
+        $this->assertStringNotContainsString('**', $html);
+        $this->assertStringNotContainsString('# ', $html);
     }
 }

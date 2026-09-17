@@ -30,7 +30,7 @@ class VerifyEmailNotification extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject('Verifikasi Email — LEXLAW')
-            ->markdown('mail.verify-email', [
+            ->view('mail.verify-email', [
                 'name' => $notifiable->name,
                 'url' => $url,
             ]);
