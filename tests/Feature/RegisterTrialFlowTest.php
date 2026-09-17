@@ -217,6 +217,37 @@ class RegisterTrialFlowTest extends TestCase
         $this->actingAs($user)->get('/regulation-contents')->assertOk();
     }
 
+    public function test_password_change_does_not_500(): void
+    {
+        $company = Company::create([
+            'tenant_id'           => Str::uuid()->toString(),
+            'name'                => 'Pwd Co',
+            'slug'                => 'pwd-' . Str::random(4),
+            'subscription_status' => 'trialing',
+            'trial_ends_at'       => now()->addDays(3),
+        ]);
+        $user = $this->verifyUser(User::create([
+            'name'              => 'Pwd Owner',
+            'email'             => 'pwd-' . Str::uuid()->toString() . '@example.com',
+            'password'          => bcrypt('password123'),
+            'tenant_id'         => $company->tenant_id,
+            'company_id'        => $company->id,
+            'role'              => 'owner',
+        ]));
+
+        $this->actingAs($user)
+             ->post('/password-change', [
+                 'current_password'            => 'password123',
+                 'new_password'                => 'newpassword456',
+                 'new_password_confirmation'   => 'newpassword456',
+             ])
+             ->assertStatus(302)
+             ->assertSessionHasNoErrors();
+
+        $user->refresh();
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('newpassword456', $user->password));
+    }
+
     public function test_workspace_nested_actions_do_not_500(): void
     {
         $company = Company::create([
