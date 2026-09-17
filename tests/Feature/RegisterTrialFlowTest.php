@@ -385,6 +385,52 @@ class RegisterTrialFlowTest extends TestCase
         $this->assertDatabaseMissing('team_workspace_members', ['workspace_id' => $workspace->id, 'user_id' => $orangB->id]);
     }
 
+    public function test_workspace_document_upload_download_delete(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+
+        $company = Company::create([
+            'tenant_id'           => Str::uuid()->toString(),
+            'name'                => 'Doc Co',
+            'slug'                => 'doc-' . Str::random(4),
+            'subscription_status' => 'trialing',
+            'trial_ends_at'       => now()->addDays(3),
+        ]);
+        $user = $this->verifyUser(User::create([
+            'name'              => 'Doc Owner',
+            'email'             => 'doc-' . Str::uuid()->toString() . '@example.com',
+            'password'          => bcrypt('password123'),
+            'tenant_id'         => $company->tenant_id,
+            'company_id'        => $company->id,
+            'role'              => 'owner',
+        ]));
+        $workspace = TeamWorkspace::create([
+            'tenant_id'  => $company->tenant_id,
+            'company_id' => $company->id,
+            'name'       => 'CASE DOC',
+            'created_by' => $user->id,
+            'is_active'  => true,
+        ]);
+        $workspace->members()->attach($user->id, ['role' => 'owner', 'joined_at' => now()]);
+
+        $this->actingAs($user)
+             ->post("/team-workspaces/{$workspace->id}/documents", [
+                 'title' => 'Perjanjian Kerja',
+                 'category' => 'perjanjian',
+                 'file'  => \Illuminate\Http\UploadedFile::fake()->create('kerja.pdf', 8, 'application/pdf'),
+             ])
+             ->assertStatus(302)
+             ->assertSessionHasNoErrors()
+             ->assertSessionMissing('error');
+
+        $this->assertDatabaseCount('workspace_documents', 1);
+
+        $doc = \App\Models\WorkspaceDocument::first();
+        $this->actingAs($user)
+             ->get("/team-workspaces/{$workspace->id}/documents/{$doc->id}/download")
+             ->assertOk();
+    }
+
     public function test_workspace_nested_actions_do_not_500(): void
     {
         $company = Company::create([
