@@ -77,7 +77,7 @@ class BillingController extends Controller
             return redirect('/billing')->withErrors('Akun Anda belum terhubung ke perusahaan.');
         }
 
-        $path = $request->file('proof')->store('proofs', 'public');
+        $path = $request->file('proof')->store('proofs', 'r2');
 
         AuditLog::create([
             'tenant_id' => $request->user()->tenant_id,

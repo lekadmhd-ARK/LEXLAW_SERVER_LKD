@@ -26,7 +26,7 @@ class CompanyResource extends Resource
                 Forms\Components\TextInput::make("slug")->required()->unique(ignoreRecord: true)->maxLength(255),
                 Forms\Components\TextInput::make("address")->maxLength(255),
                 Forms\Components\TextInput::make("phone")->tel()->maxLength(50),
-                Forms\Components\FileUpload::make("logo_url")->image()->directory("company-logos"),
+                Forms\Components\FileUpload::make("logo_url")->image()->directory("company-logos")->disk('r2'),
             ])->columns(2),
             Forms\Components\Section::make("Subscription")->schema([
                 Forms\Components\Select::make("plan_id")->relationship("plan", "name"),

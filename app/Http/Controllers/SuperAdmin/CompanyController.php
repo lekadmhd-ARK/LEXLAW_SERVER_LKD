@@ -232,11 +232,11 @@ class CompanyController extends Controller
             // 1) file fisik dokumen workspace (storage/app/private/workspace-documents/*)
             foreach ($documentPaths as $path) {
                 if (is_string($path) && $path !== '') {
-                    Storage::disk('local')->delete($path);
+                    Storage::disk('r2')->delete($path);
                 }
             }
             foreach ($workspaceFolders as $wid) {
-                Storage::disk('local')->deleteDirectory('workspace-documents/' . $wid);
+                Storage::disk('r2')->deleteDirectory('workspace-documents/' . $wid);
             }
 
             // 2) baris ber-tenant yang tidak ikut cascade dari company

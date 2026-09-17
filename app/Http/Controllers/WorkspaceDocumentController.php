@@ -23,7 +23,7 @@ class WorkspaceDocumentController extends Controller
         $filename = time() . '_' . uniqid() . '.' . $uploaded->getClientOriginalExtension();
 
         try {
-            $path = $uploaded->storeAs("workspace-documents/{$workspace->id}", $filename, 'local');
+            $path = $uploaded->storeAs("workspace-documents/{$workspace->id}", $filename, 'r2');
         } catch (\Throwable $e) {
             report($e);
             return back()->with('error', 'Gagal menyimpan file. Periksa izin penyimpanan server atau coba lagi.');
@@ -51,17 +51,17 @@ class WorkspaceDocumentController extends Controller
     public function download(TeamWorkspace $workspace, WorkspaceDocument $document)
     {
         abort_unless($document->workspace_id === $workspace->id, 403);
-        if (!Storage::disk('local')->exists($document->file_path)) {
+        if (!Storage::disk('r2')->exists($document->file_path)) {
             abort(404, 'File tidak ditemukan.');
         }
-        return Storage::disk('local')->download($document->file_path, $document->file_name);
+        return Storage::disk('r2')->download($document->file_path, $document->file_name);
     }
 
     public function destroy(Request $request, TeamWorkspace $workspace, WorkspaceDocument $document)
     {
         abort_unless($document->workspace_id === $workspace->id, 403);
-        if (Storage::disk('local')->exists($document->file_path)) {
-            Storage::disk('local')->delete($document->file_path);
+        if (Storage::disk('r2')->exists($document->file_path)) {
+            Storage::disk('r2')->delete($document->file_path);
         }
         $document->delete();
 

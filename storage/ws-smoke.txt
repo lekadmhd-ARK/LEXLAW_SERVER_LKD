@@ -1,0 +1,27 @@
+===== WS FLOWS (prod DB) =====
+OK 200 : GET /team-workspaces/11?tab=members
+OK 200 : GET /team-workspaces/11?tab=documents
+OK 200 : GET /team-workspaces/11?tab=notes
+OK 200 : GET /team-workspaces/11?tab=tasks
+OK 200 : GET /team-workspaces/11?tab=time
+OK 200 : GET /team-workspaces/11?tab=unknown
+OK 200 : GET /team-workspaces/11
+OK 302 : GET /team-workspaces/11/members
+OK 302 : GET /team-workspaces/11/documents
+OK 302 : GET /team-workspaces/11/notes
+OK 302 : GET /team-workspaces/11/tasks
+OK 302 : GET /team-workspaces/11/time-entries
+OK 302 : POST /team-workspaces/11/members
+OK 302 : PATCH /team-workspaces/11/members/74
+OK 302 : DELETE /team-workspaces/11/members/74
+OK 302 : POST /team-workspaces/11/notes
+OK 302 : PATCH /team-workspaces/11/notes/16
+OK 302 : DELETE /team-workspaces/11/notes/16
+OK 302 : POST /team-workspaces/11/tasks
+OK 302 : PATCH /team-workspaces/11/tasks/16
+OK 302 : PATCH /team-workspaces/11/tasks/16/toggle
+OK 302 : DELETE /team-workspaces/11/tasks/16
+OK 302 : POST /team-workspaces/11/time-entries
+OK 302 : DELETE /team-workspaces/11/time-entries/16
+OK 302 : POST /team-workspaces/11/documents
+===== END =====
