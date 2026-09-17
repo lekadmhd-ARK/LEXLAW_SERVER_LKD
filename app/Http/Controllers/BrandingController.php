@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\CompanySetting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class BrandingController extends Controller
 {
@@ -58,7 +57,7 @@ class BrandingController extends Controller
 
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('branding', 'r2');
-            $company->logo_url = Storage::disk('r2')->temporaryUrl($path, now()->addDays(7));
+            $company->logo_url = $path;
         }
 
         $company->settings = $settings;

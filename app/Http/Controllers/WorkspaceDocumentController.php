@@ -22,15 +22,15 @@ class WorkspaceDocumentController extends Controller
         $uploaded = $request->file('file');
         $filename = time() . '_' . uniqid() . '.' . $uploaded->getClientOriginalExtension();
 
-        try {
+try {
             $path = $uploaded->storeAs("workspace-documents/{$workspace->id}", $filename, 'r2');
         } catch (\Throwable $e) {
             report($e);
-            return back()->with('error', 'Gagal menyimpan file. Periksa izin penyimpanan server atau coba lagi.');
+            return back()->with('error', 'Gagal mengunggah dokumen ke penyimpanan. Coba lagi.');
         }
 
         if (!$path) {
-            return back()->with('error', 'Gagal menyimpan file. Coba lagi.');
+            return back()->with('error', 'Gagal mengunggah dokumen. Coba lagi.');
         }
 
         WorkspaceDocument::create([

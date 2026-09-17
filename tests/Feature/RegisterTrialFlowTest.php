@@ -158,7 +158,7 @@ class RegisterTrialFlowTest extends TestCase
 
     public function test_branding_logo_upload_saves_to_company_column(): void
     {
-        \Illuminate\Support\Facades\Storage::fake('public');
+        \Illuminate\Support\Facades\Storage::fake('r2');
 
         $company = Company::create([
             'tenant_id'           => Str::uuid()->toString(),
@@ -385,52 +385,6 @@ class RegisterTrialFlowTest extends TestCase
         $this->assertDatabaseMissing('team_workspace_members', ['workspace_id' => $workspace->id, 'user_id' => $orangB->id]);
     }
 
-    public function test_workspace_document_upload_download_delete(): void
-    {
-        \Illuminate\Support\Facades\Storage::fake('local');
-
-        $company = Company::create([
-            'tenant_id'           => Str::uuid()->toString(),
-            'name'                => 'Doc Co',
-            'slug'                => 'doc-' . Str::random(4),
-            'subscription_status' => 'trialing',
-            'trial_ends_at'       => now()->addDays(3),
-        ]);
-        $user = $this->verifyUser(User::create([
-            'name'              => 'Doc Owner',
-            'email'             => 'doc-' . Str::uuid()->toString() . '@example.com',
-            'password'          => bcrypt('password123'),
-            'tenant_id'         => $company->tenant_id,
-            'company_id'        => $company->id,
-            'role'              => 'owner',
-        ]));
-        $workspace = TeamWorkspace::create([
-            'tenant_id'  => $company->tenant_id,
-            'company_id' => $company->id,
-            'name'       => 'CASE DOC',
-            'created_by' => $user->id,
-            'is_active'  => true,
-        ]);
-        $workspace->members()->attach($user->id, ['role' => 'owner', 'joined_at' => now()]);
-
-        $this->actingAs($user)
-             ->post("/team-workspaces/{$workspace->id}/documents", [
-                 'title' => 'Perjanjian Kerja',
-                 'category' => 'perjanjian',
-                 'file'  => \Illuminate\Http\UploadedFile::fake()->create('kerja.pdf', 8, 'application/pdf'),
-             ])
-             ->assertStatus(302)
-             ->assertSessionHasNoErrors()
-             ->assertSessionMissing('error');
-
-        $this->assertDatabaseCount('workspace_documents', 1);
-
-        $doc = \App\Models\WorkspaceDocument::first();
-        $this->actingAs($user)
-             ->get("/team-workspaces/{$workspace->id}/documents/{$doc->id}/download")
-             ->assertOk();
-    }
-
     public function test_workspace_nested_actions_do_not_500(): void
     {
         $company = Company::create([
@@ -486,5 +440,66 @@ class RegisterTrialFlowTest extends TestCase
             'workspace_id' => $workspace->id,
             'user_id'      => $user->id,
         ]);
+    }
+
+    public function test_workspace_document_upload_download_delete(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('r2');
+
+        $company = Company::create([
+            'tenant_id'           => Str::uuid()->toString(),
+            'name'                => 'Doc Co',
+            'slug'                => 'doc-' . Str::random(4),
+            'subscription_status' => 'trialing',
+            'trial_ends_at'       => now()->addDays(3),
+        ]);
+        $user = $this->verifyUser(User::create([
+            'name'              => 'Doc Owner',
+            'email'             => 'doc-' . Str::uuid()->toString() . '@example.com',
+            'password'          => bcrypt('password123'),
+            'tenant_id'         => $company->tenant_id,
+            'company_id'        => $company->id,
+            'role'              => 'owner',
+        ]));
+        $workspace = TeamWorkspace::create([
+            'tenant_id'  => $company->tenant_id,
+            'company_id' => $company->id,
+            'name'       => 'CASE DOC',
+            'created_by' => $user->id,
+            'is_active'  => true,
+        ]);
+        $workspace->members()->attach($user->id, ['role' => 'owner', 'joined_at' => now()]);
+
+        $this->actingAs($user)
+             ->post("/team-workspaces/{$workspace->id}/documents", [
+                 'title'    => 'Perjanjian Kerja',
+                 'category' => 'perjanjian',
+                 'file'     => \Illuminate\Http\UploadedFile::fake()->create('kerja.pdf', 8, 'application/pdf'),
+             ])
+             ->assertStatus(302)
+             ->assertSessionHasNoErrors()
+             ->assertSessionMissing('error');
+
+        $this->assertDatabaseCount('workspace_documents', 1);
+
+        $doc = \App\Models\WorkspaceDocument::first();
+        $this->assertTrue(
+            \Illuminate\Support\Facades\Storage::disk('r2')->exists($doc->file_path),
+            'File dokumen harus benar-benar berada di disk r2.'
+        );
+
+        $this->actingAs($user)
+             ->get("/team-workspaces/{$workspace->id}/documents/{$doc->id}/download")
+             ->assertOk();
+
+        $this->actingAs($user)
+             ->delete("/team-workspaces/{$workspace->id}/documents/{$doc->id}")
+             ->assertStatus(302);
+
+        $this->assertDatabaseMissing('workspace_documents', ['id' => $doc->id]);
+        $this->assertFalse(
+            \Illuminate\Support\Facades\Storage::disk('r2')->exists($doc->file_path),
+            'File dokumen harus terhapus dari disk r2 saat dokumen dihapus.'
+        );
     }
 }

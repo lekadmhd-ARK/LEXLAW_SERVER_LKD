@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Company extends Model
 {
@@ -27,6 +29,19 @@ class Company extends Model
         'plan_id' => 'integer',
         'quota_reset_at' => 'datetime',
     ];
+
+    public function getLogoUrlAttribute(?string $value): ?string
+    {
+        if (! $value || Str::startsWith($value, ['http://', 'https://'])) {
+            return $value;
+        }
+
+        try {
+            return Storage::disk('r2')->temporaryUrl($value, now()->addDays(7));
+        } catch (\Throwable) {
+            return $value;
+        }
+    }
 
     public function plan(): BelongsTo
     {
