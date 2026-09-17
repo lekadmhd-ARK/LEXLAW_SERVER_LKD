@@ -187,6 +187,7 @@
                 <a href="/ai/validity" data-tip="Validity Checker" class="{{ request()->is('ai/validity*') ? 'active' : '' }}"><span class="ic">✓</span><span class="txt">Validity Checker</span></a>
                 <div class="sb-divider"></div>
                 <a href="/billing" data-tip="Billing" class="{{ request()->is('billing*') ? 'active' : '' }}"><span class="ic">◆</span><span class="txt">Billing</span></a>
+                <a href="/settings/branding" data-tip="Branding Perusahaan" class="{{ request()->is('settings/*') ? 'active' : '' }}"><span class="ic">🎨</span><span class="txt">Branding</span></a>
 @if(auth()->check() && auth()->user()->role == 1)                <a href="/super-admin/companies" data-tip="Payment Approval" class="{{ request()->is("super-admin/companies*") ? "active" : "" }}"><span class="ic">💳</span><span class="txt">Payment Approval</span></a>
                 <a href="/super-admin/auth-activities" data-tip="Log Auth" class="{{ request()->is("super-admin/auth-activities*") ? "active" : "" }}"><span class="ic">📋</span><span class="txt">Log Auth</span></a>                @endif
                 <a href="/password-change" data-tip="Password" class="{{ request()->is('password-change') ? 'active' : '' }}"><span class="ic">🔐</span><span class="txt">Password</span></a>

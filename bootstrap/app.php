@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'company.active' => EnsureCompanyActive::class,
             'twofactor' => RequireTwoFactor::class,
             'quota' => \App\Http\Middleware\CheckQuota::class,
+            'workspace.tenant' => \App\Http\Middleware\AuthorizeWorkspaceTenant::class,
         ]);
 
         $middleware->trustProxies(at: [

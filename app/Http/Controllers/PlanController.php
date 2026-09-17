@@ -8,10 +8,6 @@ use App\Models\User;
 
 class PlanController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('role:super-admin')->only(['edit', 'update']);
-    }
 
     public function index()
     {

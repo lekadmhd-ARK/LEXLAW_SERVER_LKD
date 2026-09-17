@@ -301,58 +301,39 @@
         <div class="section-head">
             <div class="eyebrow">💰 HARGA TRANSPARAN</div>
             <h2>Pilih Paket Sesuai Skala Anda</h2>
-            <p>Semua paket akses regulasi unlimited. Beda di kuota AI per bulan — upgrade kapan saja, refund 7 hari.</p>
+            <p>Kuota pemakaian dibaca langsung dari daftar paket resmi — upgrade kapan saja, refund 7 hari.</p>
         </div>
+        @php
+            $pricing = [
+                'basic'       => ['label' => 'Basic',        'desc' => 'Praktisi independen & freelancer', 'featured' => false],
+                'profesional' => ['label' => 'Professional', 'desc' => 'Firma hukum & konsultan UMKM',      'featured' => true],
+                'enterprise'  => ['label' => 'Enterprise',   'desc' => 'Korporasi & instansi besar',        'featured' => false],
+            ];
+            $fmt = fn ($n) => number_format((float) $n, 0, ',', '.');
+            $ai = fn ($n) => ((int) $n) >= 999999 ? 'Unlimited' : $fmt($n) . '× /bulan';
+        @endphp
         <div class="pricing-grid">
-            <div class="price-card">
-                <h3>Basic</h3>
-                <div class="plan-desc">Praktisi independen & freelancer</div>
-                <div class="price">Rp 100.<span style="font-size:15px;color:var(--dim)">000</span> <small>/bulan</small></div>
-                <div class="price-sub">atau Rp 1.000.000 /tahun</div>
-                <ul class="features-list">
-                    <li><i>✓</i> 1 user · Regulasi unlimited</li>
-                    <li><i>✓</i> Lex Q&A — 30× /bulan</li>
-                    <li><i>✓</i> Draft DOCX — 10× /bulan</li>
-                    <li><i>✓</i> Contract Review — 10× /bulan</li>
-                    <li><i>✓</i> Validity — 30× /bulan</li>
-                    <li><i>✓</i> Glosarium & Search</li>
-                    <li class="muted"><i>—</i> Tanpa Workspaces</li>
-                </ul>
-                <a href="/register" class="btn" style="width:100%">Pilih Basic</a>
-            </div>
-            <div class="price-card featured">
-                <div class="badge-pop">★ Most Popular</div>
-                <h3>Professional</h3>
-                <div class="plan-desc">Firma hukum & konsultan UMKM</div>
-                <div class="price">Rp 599.<span style="font-size:15px;color:var(--dim)">000</span> <small>/bulan</small></div>
-                <div class="price-sub">atau Rp 5.990.000 /tahun</div>
-                <ul class="features-list">
-                    <li><i>✓</i> 10 users · Regulasi unlimited</li>
-                    <li><i>✓</i> Lex Q&A — <b>Unlimited</b></li>
-                    <li><i>✓</i> Draft DOCX — 50× /bulan</li>
-                    <li><i>✓</i> Contract Review — 50× /bulan</li>
-                    <li><i>✓</i> Validity — 100× /bulan</li>
-                    <li><i>✓</i> Semua fitur Basic + prioritas</li>
-                </ul>
-                <a href="/register" class="btn btn-primary" style="width:100%">Pilih Professional</a>
-            </div>
-            <div class="price-card">
-                <h3>Enterprise</h3>
-                <div class="plan-desc">Korporasi & instansi besar</div>
-                <div class="price">Rp 999.<span style="font-size:15px;color:var(--dim)">000</span> <small>/bulan</small></div>
-                <div class="price-sub">atau Rp 9.990.000 /tahun · Custom SLA</div>
-                <ul class="features-list">
-                    <li><i>✓</i> 50 users · Regulasi unlimited</li>
-                    <li><i>✓</i> Lex Q&A — <b>Unlimited</b></li>
-                    <li><i>✓</i> Draft — <b>Unlimited</b></li>
-                    <li><i>✓</i> Contract Review — <b>Unlimited</b></li>
-                    <li><i>✓</i> Validity — <b>Unlimited</b></li>
-                    <li><i>✓</i> Workspaces + Audit Log + Priority</li>
-                </ul>
-                <a href="https://wa.me/6281297414115" target="_blank" class="btn" style="width:100%">Hubungi Sales →</a>
-            </div>
+            @foreach($pricing as $slug => $meta)
+                @php($plan = $plans?->firstWhere('slug', $slug))
+                @if($plan)
+                <div class="price-card{{ $meta['featured'] ? ' featured' : '' }}">
+                    @if($meta['featured'])<div class="badge-pop">★ Most Popular</div>@endif
+                    <h3>{{ $meta['label'] }}</h3>
+                    <div class="plan-desc">{{ $meta['desc'] }}</div>
+                    <div class="price">Rp {{ $fmt($plan->price_monthly) }} <small>/bulan</small></div>
+                    <div class="price-sub">atau Rp {{ $fmt($plan->price_yearly) }} /tahun</div>
+                    <ul class="features-list">
+                        <li><i>✓</i> {{ $plan->max_users }} user · {{ $fmt($plan->max_regulations) }} regulasi</li>
+                        <li><i>✓</i> Kuota AI: <b>{{ $ai($plan->max_ai_queries) }}</b> — Lex Q&A, Draft DOCX, Contract Review, Validity</li>
+                        @if((int) $plan->max_ai_queries < 999999)<li><i>✓</i> Kuota AI dipakai bersama antar modul, di-reset tiap bulan</li>@endif
+                        <li><i>✓</i> Workspaces tim · Glosarium · Search</li>
+                    </ul>
+                    <a href="/register" class="btn{{ $meta['featured'] ? ' btn-primary' : '' }}" style="width:100%">Pilih {{ $meta['label'] }}</a>
+                </div>
+                @endif
+            @endforeach
         </div>
-        <p style="text-align:center;margin-top:18px;font-size:12px;color:var(--dim)">Semua harga sudah termasuk akses database regulasi nasional public domain. <a href="#legal" style="text-decoration:underline">Lihat syarat & refund</a></p>
+        <p style="text-align:center;margin-top:18px;font-size:12px;color:var(--dim)">Harga ditampilkan langsung dari daftar paket terbaru. Semua harga sudah termasuk akses database regulasi nasional public domain. <a href="#legal" style="text-decoration:underline">Lihat syarat & refund</a></p>
     </section>
 
     <section class="section reveal" id="faq">

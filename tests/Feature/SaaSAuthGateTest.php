@@ -118,7 +118,7 @@ class SaaSAuthGateTest extends TestCase
 
     public function test_user_tanpa_plan_diblokir_kuota_ai(): void
     {
-        $company = $this->makeCompany('trialing'); // plan_id null → paket tidak aktif
+        $company = $this->makeCompany('active'); // aktif tetapi belum berlangganan (plan_id null) → paket tidak aktif
         $user = $this->makeUser($company);
 
         $this->actingAs($user);

@@ -26,6 +26,13 @@ class CheckQuota
             return redirect('/dashboard')->withErrors('Akun tidak memiliki perusahaan.');
         }
 
+        // Masa trial aktif (3 hari pertama) = akses penuh tanpa perlu plan/admin approve
+        if ($company->subscription_status === 'trialing'
+            && ($company->trial_ends_at === null || !$company->trial_ends_at->isPast())) {
+            $request->merge(['_trial_active' => true, '_plan_limit' => -1, '_plan_used' => 0]);
+            return $next($request);
+        }
+
         $plan = $company->plan;
         if (!$plan || !$plan->is_active) {
             return redirect('/billing')->withErrors('Paket tidak aktif. Silakan pilih paket langganan.');

@@ -22,6 +22,16 @@
                 <input type="text" name="name" value="{{ $company->name ?? '' }}">
             </div>
 
+            <div>
+                <label class="label">Alamat</label>
+                <input type="text" name="address" value="{{ $company->address ?? '' }}" placeholder="Jl. Contoh No. 12, Jakarta">
+            </div>
+
+            <div>
+                <label class="label">Telepon</label>
+                <input type="text" name="phone" value="{{ $company->phone ?? '' }}" placeholder="+62 812-0000-0000">
+            </div>
+
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                 <div>
                     <label class="label">Primary Color</label>

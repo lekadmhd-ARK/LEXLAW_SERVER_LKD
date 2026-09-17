@@ -20,6 +20,8 @@ class BrandingController extends Controller
     {
         $request->validate([
             'name'           => 'nullable|max:255',
+            'address'        => 'nullable|max:255',
+            'phone'          => 'nullable|max:30',
             'primary_color'  => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
             'accent_color'   => 'nullable|regex:/^#[0-9A-Fa-f]{6}$/',
             'logo'           => 'nullable|image|max:5120',
@@ -38,6 +40,14 @@ class BrandingController extends Controller
             $company->name = $request->input('name');
             $company->save();
         }
+
+        if ($request->filled('address')) {
+            $company->address = $request->input('address');
+        }
+        if ($request->filled('phone')) {
+            $company->phone = $request->input('phone');
+        }
+        $company->save();
 
         if ($request->filled('primary_color')) {
             $settings['primary_color'] = $request->input('primary_color');

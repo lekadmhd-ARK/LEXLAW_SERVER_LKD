@@ -8,16 +8,6 @@ use Illuminate\Http\Request;
 
 class WorkspaceNoteController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
-            $workspace = $request->route('workspace');
-            if ($workspace->tenant_id !== $request->user()->tenant_id) {
-                abort(403);
-            }
-            return $next($request);
-        });
-    }
 
     public function store(Request $request, TeamWorkspace $workspace)
     {

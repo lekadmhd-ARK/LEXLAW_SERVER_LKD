@@ -47,7 +47,13 @@ use App\Http\Controllers\PdfController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\OnboardingController;
 
-Route::get('/', fn () => view('welcome'))->name('home');
+Route::get('/', function () {
+    $plans = \Illuminate\Support\Facades\Schema::hasTable('plans')
+        ? \App\Models\Plan::where('is_active', true)->orderBy('price_monthly')->get()
+        : collect();
+
+    return view('welcome', ['plans' => $plans]);
+})->name('home');
 Route::get('/disclaimer', fn() => view('disclaimer'))->name('disclaimer');
 Route::get('/terms-of-service', fn() => view('tos'))->name('tos');
 Route::get('/refund-policy', fn() => view('refund'))->name('refund-policy');
@@ -172,22 +178,24 @@ Route::middleware(['auth', 'twofactor', 'company.active', 'trial'])->group(funct
         Route::resource('putusans', PutusanController::class)->only(['index', 'show']);
         Route::post('putusans/{putusan}/analyze', [PutusanController::class, 'analyze'])->name('putusans.analyze')->where('putusan', '[0-9]+');
         Route::resource('team-workspaces', TeamWorkspaceController::class);
-        // Workspace nested features
-        Route::post('team-workspaces/{workspace}/members', [WorkspaceMemberController::class, 'store'])->name('workspace-members.store');
-        Route::patch('team-workspaces/{workspace}/members/{user}', [WorkspaceMemberController::class, 'update'])->name('workspace-members.update');
-        Route::delete('team-workspaces/{workspace}/members/{user}', [WorkspaceMemberController::class, 'destroy'])->name('workspace-members.destroy');
-        Route::post('team-workspaces/{workspace}/documents', [WorkspaceDocumentController::class, 'store'])->name('workspace-documents.store');
-        Route::get('team-workspaces/{workspace}/documents/{document}/download', [WorkspaceDocumentController::class, 'download'])->name('workspace-documents.download');
-        Route::delete('team-workspaces/{workspace}/documents/{document}', [WorkspaceDocumentController::class, 'destroy'])->name('workspace-documents.destroy');
-        Route::post('team-workspaces/{workspace}/notes', [WorkspaceNoteController::class, 'store'])->name('workspace-notes.store');
-        Route::patch('team-workspaces/{workspace}/notes/{note}', [WorkspaceNoteController::class, 'update'])->name('workspace-notes.update');
-        Route::delete('team-workspaces/{workspace}/notes/{note}', [WorkspaceNoteController::class, 'destroy'])->name('workspace-notes.destroy');
-        Route::post('team-workspaces/{workspace}/tasks', [WorkspaceTaskController::class, 'store'])->name('workspace-tasks.store');
-        Route::patch('team-workspaces/{workspace}/tasks/{task}', [WorkspaceTaskController::class, 'update'])->name('workspace-tasks.update');
-        Route::delete('team-workspaces/{workspace}/tasks/{task}', [WorkspaceTaskController::class, 'destroy'])->name('workspace-tasks.destroy');
-        Route::patch('team-workspaces/{workspace}/tasks/{task}/toggle', [WorkspaceTaskController::class, 'toggleStatus'])->name('workspace-tasks.toggle');
-        Route::post('team-workspaces/{workspace}/time-entries', [WorkspaceTimeEntryController::class, 'store'])->name('workspace-time.store');
-        Route::delete('team-workspaces/{workspace}/time-entries/{entry}', [WorkspaceTimeEntryController::class, 'destroy'])->name('workspace-time.destroy');
+        // Workspace nested features (dibungkus middleware tenant workspace)
+        Route::middleware('workspace.tenant')->group(function () {
+            Route::post('team-workspaces/{workspace}/members', [WorkspaceMemberController::class, 'store'])->name('workspace-members.store');
+            Route::patch('team-workspaces/{workspace}/members/{user}', [WorkspaceMemberController::class, 'update'])->name('workspace-members.update');
+            Route::delete('team-workspaces/{workspace}/members/{user}', [WorkspaceMemberController::class, 'destroy'])->name('workspace-members.destroy');
+            Route::post('team-workspaces/{workspace}/documents', [WorkspaceDocumentController::class, 'store'])->name('workspace-documents.store');
+            Route::get('team-workspaces/{workspace}/documents/{document}/download', [WorkspaceDocumentController::class, 'download'])->name('workspace-documents.download');
+            Route::delete('team-workspaces/{workspace}/documents/{document}', [WorkspaceDocumentController::class, 'destroy'])->name('workspace-documents.destroy');
+            Route::post('team-workspaces/{workspace}/notes', [WorkspaceNoteController::class, 'store'])->name('workspace-notes.store');
+            Route::patch('team-workspaces/{workspace}/notes/{note}', [WorkspaceNoteController::class, 'update'])->name('workspace-notes.update');
+            Route::delete('team-workspaces/{workspace}/notes/{note}', [WorkspaceNoteController::class, 'destroy'])->name('workspace-notes.destroy');
+            Route::post('team-workspaces/{workspace}/tasks', [WorkspaceTaskController::class, 'store'])->name('workspace-tasks.store');
+            Route::patch('team-workspaces/{workspace}/tasks/{task}', [WorkspaceTaskController::class, 'update'])->name('workspace-tasks.update');
+            Route::delete('team-workspaces/{workspace}/tasks/{task}', [WorkspaceTaskController::class, 'destroy'])->name('workspace-tasks.destroy');
+            Route::patch('team-workspaces/{workspace}/tasks/{task}/toggle', [WorkspaceTaskController::class, 'toggleStatus'])->name('workspace-tasks.toggle');
+            Route::post('team-workspaces/{workspace}/time-entries', [WorkspaceTimeEntryController::class, 'store'])->name('workspace-time.store');
+            Route::delete('team-workspaces/{workspace}/time-entries/{entry}', [WorkspaceTimeEntryController::class, 'destroy'])->name('workspace-time.destroy');
+        });
         // SaaS Layer Routes
         Route::get("/notifications", [NotificationController::class, "index"])->name("notifications.index");
         Route::post("/notifications/{id}/read", [NotificationController::class, "read"])->name("notifications.read");
