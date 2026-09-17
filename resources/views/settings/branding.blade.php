@@ -16,6 +16,7 @@
     <div class="card" style="max-width:640px">
         <form method="POST" action="{{ route('branding.update') }}" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:16px">
             @csrf
+            @method('PUT')
             <div>
                 <label class="label">Nama Perusahaan</label>
                 <input type="text" name="name" value="{{ $company->name ?? '' }}">
