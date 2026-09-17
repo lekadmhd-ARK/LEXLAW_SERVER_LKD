@@ -27,6 +27,7 @@ class RegisterController extends Controller
             'email' => ['required', 'email', 'unique:users'],
             'password' => ['required', 'confirmed'],
             'company_name' => ['required', 'max:255'],
+            'consent' => ['required', 'accepted'],
         ]);
 
         $tenantId = Str::uuid()->toString();

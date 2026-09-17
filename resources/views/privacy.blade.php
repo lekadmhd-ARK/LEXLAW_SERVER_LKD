@@ -21,7 +21,7 @@
                 <p style="margin-bottom:6px">Data yang dikumpulkan dikelompokkan sebagai berikut:</p>
                 <p style="margin-bottom:6px;margin-left:20px">• <b>Data identitas & akun:</b> nama, alamat email, kata sandi (terenkripsi), nama perusahaan, dan peran pengguna.</p>
                 <p style="margin-bottom:6px;margin-left:20px">• <b>Data bisnis tenant:</b> regulasi, dokumen kontrak, catatan kerja, dan data hukum yang Anda unggah atau buat dalam akun perusahaan Anda.</p>
-                <p style="margin-bottom:6px;margin-left:20px">• <b>Data teknis:</b> alamat IP, jenis perangkat/browser, dan log aktivitas penggunaan untuk keperluan keamanan dan audit.</p>
+                <p style="margin-bottom:6px;margin-left:20px">• <b>Data teknis & keamanan:</b> alamat IP, lokasi kota berdasarkan IP (geolokasi level kota), alamat MAC perangkat (jika tersedia), sidik jari perangkat (device fingerprint — kombinasi unik browser &amp; perangkat), jenis perangkat/browser, alamat IP lokal, serta log aktivitas penggunaan untuk keperluan keamanan dan audit.</p>
                 <p style="margin-bottom:6px;margin-left:20px">• <b>Data pembayaran:</b> Kami TIDAK menyimpan data kartu atau rekening Anda. Pembayaran diproses oleh penyedia payment gateway pihak ketiga (mis. Midtrans/QRIS) sesuai kebijakan mereka.</p>
 
                 <hr style="border:none;border-top:1px solid var(--line);margin:24px 0">

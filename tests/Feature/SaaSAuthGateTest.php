@@ -111,6 +111,8 @@ class SaaSAuthGateTest extends TestCase
         $user = $this->makeUser($company, ['role' => '1']);
 
         $this->actingAs($user);
+        // Super Admin wajib 2FA dulu; tandai lewat agar fokus menguji bypass status company
+        session()->put('2fa_passed', true);
         $this->get('/dashboard')->assertOk();
     }
 

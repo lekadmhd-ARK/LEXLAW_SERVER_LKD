@@ -88,6 +88,10 @@ class SecurityController extends Controller
     {
         $user = $request->user();
 
+        if ($user->role == 1) {
+            return back()->with('error', 'Autentikasi dua langkah wajib untuk Super Admin dan tidak dapat dinonaktifkan.');
+        }
+
         if (!$user->two_factor_enabled) {
             return back()->with('error', 'Autentikasi dua langkah tidak aktif.');
         }

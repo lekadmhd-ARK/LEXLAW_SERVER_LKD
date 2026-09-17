@@ -12,7 +12,7 @@ class RequireTwoFactor
     {
         $user = $request->user();
 
-        if ($user && $user->two_factor_enabled && !$request->session()->get('2fa_passed', false)) {
+        if ($user && ($user->two_factor_enabled || $user->role == 1) && !$request->session()->get('2fa_passed', false)) {
             if (!$request->routeIs('two-factor.*') && !$request->routeIs('logout')) {
                 return redirect()->route('two-factor.form');
             }

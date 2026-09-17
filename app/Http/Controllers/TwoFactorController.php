@@ -11,7 +11,7 @@ class TwoFactorController extends Controller
 {
     public function form(Request $request)
     {
-        if (!$request->user()->two_factor_enabled) {
+        if (!$request->user()->two_factor_enabled && $request->user()->role != 1) {
             return redirect()->route('dashboard');
         }
 

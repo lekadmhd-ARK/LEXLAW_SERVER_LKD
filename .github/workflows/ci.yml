@@ -10,8 +10,42 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, dom, fileinfo
+          coverage: none
+
+      - name: PHP syntax check
+        run: |
+          FAILED=0
+          for f in $(find app routes database config -name "*.php"); do
+            OUT=$(php -l "$f" 2>&1)
+            if [ $? -ne 0 ]; then
+              echo "$OUT"
+              FAILED=1
+            fi
+          done
+          echo "lint files checked: $(find app routes database config -name '*.php' | wc -l)"
+          exit $FAILED
+
+      - name: PHPUnit syntax check (tests)
+        run: |
+          for f in $(find tests -name "*.php"); do
+            OUT=$(php -l "$f" 2>&1)
+            if [ $? -ne 0 ]; then echo "$OUT"; FAILED=1; fi
+          done
+          exit ${FAILED:-0}
+
   test:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
       - uses: actions/checkout@v4
 
