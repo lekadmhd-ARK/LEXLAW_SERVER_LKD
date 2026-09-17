@@ -48,7 +48,7 @@
         <div class="field" style="margin-top:8px">
             <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:13px;color:var(--text-muted);line-height:1.5">
                 <input type="checkbox" name="consent" required style="margin-top:3px">
-                <span>Saya menyetujui <a href="/privacy-policy" target="_blank" style="color:var(--accent)">Kebijakan Privasi</a> dan <a href="/terms" target="_blank" style="color:var(--accent)">Syarat &amp; Ketentuan</a> LEXLAW, termasuk pengumpulan data teknis untuk keamanan.</span>
+                <span>Saya menyetujui <a href="{{ route('privacy') }}" target="_blank" style="color:var(--accent)">Kebijakan Privasi</a> dan <a href="{{ route('tos') }}" target="_blank" style="color:var(--accent)">Syarat &amp; Ketentuan</a> LEXLAW, termasuk pengumpulan data teknis untuk keamanan.</span>
             </label>
         </div>
 
