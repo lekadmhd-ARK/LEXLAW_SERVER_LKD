@@ -251,5 +251,6 @@
     })();
     </script>
     @stack('scripts')
+    <x-auth-device-info />
 </body>
 </html>

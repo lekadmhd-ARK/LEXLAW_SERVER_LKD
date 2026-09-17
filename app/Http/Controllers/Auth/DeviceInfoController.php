@@ -4,12 +4,13 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuthActivity;
+use App\Services\IpGeolocation;
 use Illuminate\Http\Request;
 
 /**
- * Client (browser) melaporkan IP lokal hasil WebRTC (best-effort).
- * MAC hanya terisi bila server berada di LAN yang sama (via ARP lookup).
- * Dari internet publik, MAC tidak tersedia — kolom tetap diisi null.
+ * Client (browser) melaporkan IP lokal (WebRTC) + device fingerprint.
+ * Server: resolve MAC via ARP hanya bila di LAN sama, dan geolokasi (negara/
+ * kota/koordinat/ISP) dari public IP. Dari internet publik, MAC tidak tersedia.
  */
 class DeviceInfoController extends Controller
 {
@@ -20,11 +21,17 @@ class DeviceInfoController extends Controller
             return response()->json(['ok' => false], 401);
         }
 
-        $localIps = collect($request->input('local_ips', []))
+        $localIps = collect((array) ($request->input('local_ips') ?? []))
             ->filter(fn ($ip) => is_string($ip) && filter_var($ip, FILTER_VALIDATE_IP))
             ->unique()
             ->values()
             ->all();
+
+        $fingerprint = null;
+        $fp = $request->input('fingerprint');
+        if (is_string($fp) && preg_match('/^[a-f0-9]{8,64}$/', strtolower($fp))) {
+            $fingerprint = strtolower($fp);
+        }
 
         $activity = AuthActivity::where('user_id', $user->id)
             ->whereIn('event', ['login', 'register', 'login_failed'])
@@ -44,14 +51,28 @@ class DeviceInfoController extends Controller
         }
 
         $mac = null;
-        if (config('app.env') === 'production' || $privateIp) {
+        if ($privateIp) {
             $mac = $this->resolveMacViaArp($privateIp);
         }
 
-        $activity->update([
+        $data = [
             'local_ip' => $privateIp ?? ($localIps[0] ?? null),
-            'mac_address' => $activity->mac_address ?? $mac,
-        ]);
+            'device_fingerprint' => $activity->device_fingerprint ?? $fingerprint,
+        ];
+
+        if ($mac) {
+            $data['mac_address'] = $activity->mac_address ?? $mac;
+        }
+
+        $ip = $request->ip();
+        if (!$activity->geo_country && $fingerprint && !in_array($ip, ['127.0.0.1', '::1'], true)) {
+            $geo = IpGeolocation::lookup($ip);
+            if ($geo) {
+                $data = array_merge($data, $geo);
+            }
+        }
+
+        $activity->update($data);
 
         return response()->json(['ok' => true, 'matched' => true]);
     }

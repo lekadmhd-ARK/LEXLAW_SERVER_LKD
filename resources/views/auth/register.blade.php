@@ -51,6 +51,4 @@
     <div class="alt">
         Sudah punya akun? <a href="{{ route('login') }}">Masuk</a>
     </div>
-
-    <x-auth-device-info />
 </x-layouts.auth>

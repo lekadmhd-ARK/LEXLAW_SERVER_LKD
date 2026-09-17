@@ -7,7 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class AuthActivity extends Model
 {
     protected $fillable = [
-        'user_id', 'event', 'email', 'ip_address', 'mac_address', 'local_ip', 'user_agent',
+        'user_id', 'event', 'email', 'ip_address', 'mac_address', 'local_ip',
+        'device_fingerprint',
+        'geo_country', 'geo_region', 'geo_city', 'geo_lat', 'geo_lon', 'geo_isp',
+        'user_agent',
+    ];
+
+    protected $casts = [
+        'geo_lat' => 'float',
+        'geo_lon' => 'float',
     ];
 
     public function user()

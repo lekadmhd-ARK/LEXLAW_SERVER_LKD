@@ -33,6 +33,8 @@
         <th style="padding:10px 8px">User</th>
         <th style="padding:10px 8px">Event</th>
         <th style="padding:10px 8px">IP</th>
+        <th style="padding:10px 8px">Fingerprint</th>
+        <th style="padding:10px 8px">Lokasi</th>
         <th style="padding:10px 8px">MAC / IP lokal</th>
         <th style="padding:10px 8px">User-Agent</th>
       </tr>
@@ -53,6 +55,28 @@
           <span style="background:{{ $color }}22;color:{{ $color }};padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600">{{ $a->event }}</span>
         </td>
         <td style="padding:10px 8px;font-family:monospace;color:var(--text)">{{ $a->ip_address ?? '—' }}</td>
+        <td style="padding:10px 8px">
+          @if($a->device_fingerprint)
+            <span style="font-family:monospace;font-size:12px;color:var(--text)" title="{{ $a->device_fingerprint }}">{{ substr($a->device_fingerprint, 0, 12) }}…</span>
+          @else
+            <span style="color:var(--muted)">—</span>
+          @endif
+        </td>
+        <td style="padding:10px 8px">
+          @if($a->geo_country)
+            <div style="color:var(--text)">
+              {{ $a->geo_country }}{{ $a->geo_region ? ' — ' . $a->geo_region : '' }}{{ $a->geo_city ? ', ' . $a->geo_city : '' }}
+            </div>
+            @if($a->geo_lat !== null && $a->geo_lon !== null)
+              <div style="font-size:11px;color:var(--muted);font-family:monospace">{{ round($a->geo_lat, 4) }}, {{ round($a->geo_lon, 4) }}</div>
+            @endif
+            @if($a->geo_isp)
+              <div style="font-size:11px;color:var(--muted)">{{ $a->geo_isp }}</div>
+            @endif
+          @else
+            <span style="color:var(--muted)">—</span>
+          @endif
+        </td>
         <td style="padding:10px 8px">
           <span style="font-family:monospace;color:var(--text)">{{ $a->mac_address ?? '—' }}</span>
           @if($a->local_ip && $a->local_ip !== ($a->mac_address ?? null) && !$a->mac_address)

@@ -43,6 +43,4 @@
     <div class="alt">
         Butuh bantuan? <a href="https://wa.me/6281297414115" target="_blank">Chat via WhatsApp</a>
     </div>
-
-    <x-auth-device-info />
 </x-layouts.auth>
