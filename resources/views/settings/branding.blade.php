@@ -43,10 +43,10 @@
                 </div>
             </div>
 
-            @if(!empty($settings['logo_url']))
+            @if(!empty($company->logo_url))
             <div>
                 <label class="label">Logo Saat Ini</label>
-                <img src="{{ $settings['logo_url'] }}" alt="Logo" style="max-height:60px;border-radius:8px;border:1px solid var(--line);padding:4px">
+                <img src="{{ $company->logo_url }}" alt="Logo" style="max-height:60px;border-radius:8px;border:1px solid var(--line);padding:4px">
             </div>
             @endif
 
@@ -66,8 +66,8 @@
         <h3 style="font-size:14px;font-weight:600;margin-bottom:12px">Preview</h3>
         <div style="padding:16px;border-radius:8px;background:var(--bg2);border:1px solid var(--line)">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-                @if(!empty($settings['logo_url']))
-                <img src="{{ $settings['logo_url'] }}" style="height:24px">
+                @if(!empty($company->logo_url))
+                <img src="{{ $company->logo_url }}" style="height:24px">
                 @endif
                 <span style="font-weight:600;color:{{ $settings['primary_color'] }}">{{ $company->name }}</span>
             </div>

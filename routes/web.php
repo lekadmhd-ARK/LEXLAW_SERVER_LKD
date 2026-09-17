@@ -163,7 +163,8 @@ Route::middleware(['auth', 'twofactor', 'company.active', 'trial'])->group(funct
     Route::get('regulations/{regulation}/edit', [RegulationController::class, 'edit'])->name('regulations.edit');
     Route::put('regulations/{regulation}', [RegulationController::class, 'update'])->name('regulations.update');
     Route::delete('regulations/{regulation}', [RegulationController::class, 'destroy'])->name('regulations.destroy');
-    Route::post('regulations/search-fetch', [RegulationController::class, 'searchAndFetchFromBpk'])->name('regulations.search-fetch')->middleware('quota:regulations');
+        Route::post('regulations/search-fetch', [RegulationController::class, 'searchAndFetchFromBpk'])->name('regulations.search-fetch')->middleware('quota:regulations');
+        Route::post('regulations/fetch-jdih', [RegulationController::class, 'fetchFromJdihUrl'])->name('regulations.fetch-jdih');
     Route::post('regulations/{regulation}/refetch', [RegulationController::class, 'refetchFromBpk'])->name('regulations.refetch')->middleware('quota:regulations');
 
     // Core CRUD & fitur lanjutan — WAJIB email terverifikasi

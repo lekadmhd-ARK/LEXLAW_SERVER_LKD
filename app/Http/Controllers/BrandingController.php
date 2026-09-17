@@ -58,7 +58,7 @@ class BrandingController extends Controller
 
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('branding', 'public');
-            $settings['logo_url'] = Storage::disk('public')->url($path);
+            $company->logo_url = Storage::disk('public')->url($path);
         }
 
         $company->settings = $settings;

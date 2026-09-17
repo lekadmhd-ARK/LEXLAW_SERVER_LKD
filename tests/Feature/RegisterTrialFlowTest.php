@@ -156,6 +156,67 @@ class RegisterTrialFlowTest extends TestCase
         $this->assertSame('+62 812-0000-0000', $company->phone);
     }
 
+    public function test_branding_logo_upload_saves_to_company_column(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $company = Company::create([
+            'tenant_id'           => Str::uuid()->toString(),
+            'name'                => 'Logo Co',
+            'slug'                => 'logo-' . Str::random(4),
+            'subscription_status' => 'trialing',
+            'trial_ends_at'       => now()->addDays(3),
+        ]);
+        $user = $this->verifyUser(User::create([
+            'name'              => 'Logo Owner',
+            'email'             => 'logo-' . Str::uuid()->toString() . '@example.com',
+            'password'          => bcrypt('password123'),
+            'tenant_id'         => $company->tenant_id,
+            'company_id'        => $company->id,
+            'role'              => 'owner',
+        ]));
+
+        $this->actingAs($user)
+             ->put('/settings/branding', [
+                 'logo' => \Illuminate\Http\UploadedFile::fake()->image('logo.png', 200, 200),
+             ])
+             ->assertSessionHasNoErrors()
+             ->assertStatus(302);
+
+        $company->refresh();
+        $this->assertNotEmpty($company->logo_url, 'Logo harus tersimpan di kolom companies.logo_url.');
+        $this->assertStringContainsString('branding/', $company->logo_url);
+
+        $this->actingAs($user)
+             ->get('/settings/branding')
+             ->assertOk()
+             ->assertSee($company->logo_url, false);
+    }
+
+    public function test_regulation_create_and_contents_pages_render(): void
+    {
+        $company = Company::create([
+            'tenant_id'           => Str::uuid()->toString(),
+            'name'                => 'Reg Co',
+            'slug'                => 'reg-' . Str::random(4),
+            'subscription_status' => 'trialing',
+            'trial_ends_at'       => now()->addDays(3),
+        ]);
+        $user = $this->verifyUser(User::create([
+            'name'              => 'Reg Owner',
+            'email'             => 'reg-' . Str::uuid()->toString() . '@example.com',
+            'password'          => bcrypt('password123'),
+            'tenant_id'         => $company->tenant_id,
+            'company_id'        => $company->id,
+            'role'              => 'owner',
+        ]));
+
+        $this->assertTrue(\Illuminate\Support\Facades\Route::has('regulations.fetch-jdih'));
+
+        $this->actingAs($user)->get('/regulations/create')->assertOk();
+        $this->actingAs($user)->get('/regulation-contents')->assertOk();
+    }
+
     public function test_workspace_nested_actions_do_not_500(): void
     {
         $company = Company::create([
