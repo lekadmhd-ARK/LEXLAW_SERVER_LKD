@@ -4,10 +4,13 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\PaymentConfirmationMail;
-use App\Models\Company;
 use App\Models\AuditLog;
+use App\Models\Company;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class CompanyController extends Controller
 {
@@ -192,5 +195,88 @@ class CompanyController extends Controller
         ]);
 
         return back()->with('success', "Status {$company->name} diubah dari \"{$old}\" ke \"{$new}\"");
+    }
+
+    public function destroy(Request $request, $company)
+    {
+        $id = is_object($company) ? $company->getKey() : $company;
+        $company = Company::withoutGlobalScopes()->findOrFail($id);
+
+        if ($request->user()->company_id == $company->id) {
+            return back()->with('error', "Tidak dapat menghapus perusahaan milik super admin sendiri ({$company->name}).");
+        }
+
+        $tenant = $company->tenant_id;
+        $userIds = DB::table('users')->where('company_id', $company->id)->pluck('id');
+        $userEmails = DB::table('users')->where('company_id', $company->id)->pluck('email')->filter()->values();
+
+        // kumpulkan file dokumen beserta folder-nya sebelum row-nya hilang (best-effort)
+        $documentPaths = DB::table('workspace_documents')
+            ->join('team_workspaces', 'team_workspaces.id', '=', 'workspace_documents.workspace_id')
+            ->where('team_workspaces.company_id', $company->id)
+            ->pluck('workspace_documents.file_path');
+        $workspaceFolders = DB::table('team_workspaces')
+            ->where('company_id', $company->id)
+            ->pluck('id');
+
+        $snapshot = [
+            'id' => $company->id,
+            'name' => $company->name,
+            'slug' => $company->slug,
+            'tenant_id' => $company->tenant_id,
+            'status' => $company->subscription_status,
+            'deleted_at' => now()->toDateTimeString(),
+        ];
+
+        DB::transaction(function () use ($company, $tenant, $userIds, $userEmails, $request, $snapshot, $documentPaths, $workspaceFolders) {
+            // 1) file fisik dokumen workspace (storage/app/private/workspace-documents/*)
+            foreach ($documentPaths as $path) {
+                if (is_string($path) && $path !== '') {
+                    Storage::disk('local')->delete($path);
+                }
+            }
+            foreach ($workspaceFolders as $wid) {
+                Storage::disk('local')->deleteDirectory('workspace-documents/' . $wid);
+            }
+
+            // 2) baris ber-tenant yang tidak ikut cascade dari company
+            DB::table('consolidations')->where('tenant_id', $tenant)->delete();
+            DB::table('consolidation_chunks')->where('tenant_id', $tenant)->delete();
+            DB::table('regulation_passages')->where('tenant_id', $tenant)->delete();
+
+            // 3) jejak auth & audit
+            DB::table('auth_activities')->where(function ($q) use ($userIds, $userEmails) {
+                $q->whereIn('user_id', $userIds)->orWhereIn('email', $userEmails);
+            })->delete();
+            DB::table('audit_logs')->where('tenant_id', $tenant)
+                ->orWhere(function ($q) use ($company) {
+                    $q->where('subject_type', 'Company')->where('subject_id', $company->id);
+                })->delete();
+
+            // 4) role/permission Spatie yang menempel di user
+            DB::table('model_has_roles')->where('model_type', User::class)->whereIn('model_id', $userIds)->delete();
+
+            // 5) company (cascade: regulations+contents, team_workspaces+members+docs/notes/tasks/time, webhooks, company_settings)
+            DB::table('companies')->where('id', $company->id)->delete();
+
+            // 6) users terakhir (cascade ai_chat_history; users.company_id nullOnDelete sudah lepas)
+            DB::table('users')->whereIn('id', $userIds)->delete();
+
+            // 7) catat audit pemusnahan (tenant null agar tak ikut terhapus)
+            AuditLog::withoutGlobalScopes()->create([
+                'tenant_id' => null,
+                'user_id' => $request->user()->id,
+                'user_name' => $request->user()->name,
+                'action' => 'company_deleted',
+                'subject_type' => 'Company',
+                'subject_id' => $company->id,
+                'old_values' => ['users_removed' => $userIds->count()],
+                'new_values' => $snapshot,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        });
+
+        return back()->with('success', "Client {$company->name} beserta " . $userIds->count() . " user dan semua datanya dihapus permanen dari database.");
     }
 }

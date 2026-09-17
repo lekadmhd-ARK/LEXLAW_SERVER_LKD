@@ -129,6 +129,7 @@ Route::middleware(['auth', 'twofactor', 'company.active', 'trial'])->group(funct
     Route::post('/super-admin/companies/{company}/activate', [\App\Http\Controllers\SuperAdmin\CompanyController::class, 'activate'])->name('super-admin.companies.activate');
     Route::post('/super-admin/companies/{company}/deactivate', [\App\Http\Controllers\SuperAdmin\CompanyController::class, 'deactivate'])->name('super-admin.companies.deactivate');
     Route::post('/super-admin/companies/{company}/status', [\App\Http\Controllers\SuperAdmin\CompanyController::class, 'updateStatus'])->name('super-admin.companies.status');
+    Route::delete('/super-admin/companies/{company}', [\App\Http\Controllers\SuperAdmin\CompanyController::class, 'destroy'])->name('super-admin.companies.destroy');
     });
 
     // Password change
