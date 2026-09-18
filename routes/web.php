@@ -177,7 +177,8 @@ Route::middleware(['auth', 'twofactor', 'company.active', 'trial'])->group(funct
         Route::resource('regulation-contents', RegulationContentController::class)->only(['index', 'store', 'update']);
         Route::resource('legal-glossary', LegalGlossaryController::class);
         Route::resource('consolidations', ConsolidationController::class)->only(['index', 'create', 'store', 'update']);
-        Route::resource('putusans', PutusanController::class)->only(['index', 'show']);
+        Route::get('putusans/create', fn () => redirect()->route('decisions'))->name('putusans.create');
+        Route::resource('putusans', PutusanController::class)->only(['index', 'show'])->whereNumber('putusan');
         Route::post('putusans/{putusan}/analyze', [PutusanController::class, 'analyze'])->name('putusans.analyze')->where('putusan', '[0-9]+');
         Route::resource('team-workspaces', TeamWorkspaceController::class);
         // Workspace nested features (dibungkus middleware tenant workspace)
