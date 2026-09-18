@@ -174,6 +174,7 @@ Route::middleware(['auth', 'twofactor', 'company.active', 'trial'])->group(funct
         Route::get('decisions/courts', [DecisionController::class, 'getCourts'])->name('decisions.courts');
         Route::get('decisions/categories', [DecisionController::class, 'getCategories'])->name('decisions.categories');
         Route::get('decisions/fetch', [DecisionController::class, 'fetchDecisions'])->name('decisions.fetch');
+        Route::post('decisions/import', [DecisionController::class, 'import'])->name('decisions.import');
         Route::resource('regulation-contents', RegulationContentController::class)->only(['index', 'store', 'update']);
         Route::resource('legal-glossary', LegalGlossaryController::class);
         Route::resource('consolidations', ConsolidationController::class)->only(['index', 'create', 'store', 'update']);

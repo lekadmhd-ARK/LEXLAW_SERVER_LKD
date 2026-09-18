@@ -4,7 +4,7 @@
     <div>
       <div class="eyebrow">Direktori Putusan Mahkamah Agung</div>
       <h1 class="page-title">Feeds Putusan</h1>
-      <p class="page-desc">Filter bertahap PN → Klasifikasi → Tahun. Data lokal, tanpa DB, tanpa AI. Klik Muat untuk buka Direktori MA terfilter.</p>
+      <p class="page-desc">Filter bertahap PN → Klasifikasi → Tahun. Klik Muat untuk buka Direktori MA terfilter, atau Impor untuk menyimpan draft putusan ke database.</p>
     </div>
   </div>
 
@@ -36,8 +36,36 @@
     <div id="filter-info" style="margin-top:10px;font-size:11px;color:var(--muted)"></div>
   </div>
 
-  <div id="putusan-list"></div>
-  <div id="putusan-status" style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Pilih PN untuk mulai.</div>
+<div id="putusan-list"></div>
+    <div id="putusan-status" style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Pilih PN untuk mulai.</div>
+
+  <div class="card" style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+    <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">Impor draft putusan ke database (via snapshot Wayback halaman resmi MA)</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.5">
+      Akses langsung dari server ke putusan3.mahkamahagung.go.id diblokir Cloudflare, jadi dipakai arsip Wayback atas halaman resmi MA yang sama (satu-satunya sumber resmi).
+      Hasil disimpan sebagai <b>DRAFT</b> (is_published=false) — wajib dipublish via admin sebelum tampil di pustaka publik. Impor aman diulangi (dedupe by nomor putusan).
+    </div>
+    <div style="display:grid;grid-template-columns:auto auto auto auto;gap:12px;align-items:end">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">Jumlah</label>
+        <select id="imp-limit" style="width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+          <option value="10" selected>10 putusan</option>
+          <option value="30">30 putusan</option>
+          <option value="50">50 putusan</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">Teks lengkap PDF</label>
+        <select id="imp-pdf" style="width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg);color:var(--text)">
+          <option value="0">Metadata saja (cepat)</option>
+          <option value="1">+ teks dokumen (lambat)</option>
+        </select>
+      </div>
+      <button id="btn-import" disabled style="padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-weight:700;cursor:pointer;opacity:.5">Impor ke Database</button>
+      <div style="font-size:11px;color:var(--muted)">Butuh 20–120 detik. Tombol Muat (di atas) tetap tersedia untuk membuka direktori aslinya.</div>
+    </div>
+    <div id="import-result" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>
+  </div>
 </div>
 
 <script>
@@ -114,5 +142,41 @@ btnMuat.addEventListener('click', async ()=>{
   finally{ btnMuat.disabled=false; }
 });
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+const impBtn=document.getElementById('btn-import');
+const impLimit=document.getElementById('imp-limit');
+const impPdf=document.getElementById('imp-pdf');
+const impResult=document.getElementById('import-result');
+function impEnable(enabled){ impBtn.disabled=!enabled; impBtn.style.opacity=enabled?1:.5; }
+impEnable(false);
+pnSel.addEventListener('change', ()=>{ impEnable(!!pnSel.value); impResult.textContent=''; });
+katSel.addEventListener('change', ()=>{});
+
+impBtn.addEventListener('click', async ()=>{
+  if(!curPN && !pnSel.value){ impResult.textContent='Pilih PN dulu.'; return; }
+  const usePN = pnSel.value;
+  impBtn.disabled=true;
+  impResult.innerHTML='<span style="color:var(--accent)">⏳ Mengimpor '+impLimit.value+' putusan untuk '+esc(pnSel.options[pnSel.selectedIndex]?.text||usePN)+'… Perlu ± 20\u2013120 detik, jangan tutup tab.</span>';
+  try{
+    const headers={ 'Accept':'application/json','X-Requested-With':'XMLHttpRequest' };
+    const meta=document.querySelector('meta[name="csrf-token"]');
+    if(meta){ headers['X-CSRF-TOKEN']=meta.content; }
+    else{
+      const m=document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+      if(m){ headers['X-XSRF-TOKEN']=decodeURIComponent(m[1]); }
+    }
+    const body=new URLSearchParams({ pn:usePN, kategori:katSel.value||'', tahun:thnSel.value||'', limit:impLimit.value, with_pdf:impPdf.value });
+    const r=await fetch('{{ route('decisions.import') }}',{ method:'POST', headers, body });
+    const j=await r.json();
+    if(!r.ok){ impResult.innerHTML='<span style="color:#e5534b">Gagal: '+esc(j.error||r.status)+'</span>'; return; }
+    const s=j.summary||{};
+    let rows='';
+    (s.entries||[]).forEach((e,i)=>{ rows+='<div style="padding:3px 0;border-bottom:1px solid var(--line)">#'+(i+1)+' '+esc(e.nomor)+' <span style="color:var(--muted)">['+esc(e.action)+(e.text==='yes'?', teks lengkap':'')+']</span></div>'; });
+    impResult.innerHTML='<div style="color:#2ea043;font-weight:700;margin-bottom:8px">✅ Impor selesai: '+s.created+' baru, '+s.updated+' update, '+s.with_text+' dengan teks lengkap'+(s.errors?' ('+s.errors+' error)':'')+'</div>'
+      +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">'+esc(j.message||'')+'</div>'
+      +(rows||'<div>0 putusan ditemukan pada snapshot ('+esc(pnSel.options[pnSel.selectedIndex]?.text||usePN)+').</div>');
+  }catch(e){ impResult.innerHTML='<span style="color:#e5534b">Gagal: '+esc(e.message)+'</span>'; }
+  finally{ impBtn.disabled=false; impBtn.style.opacity=1; }
+});
 </script>
 </x-layouts.base>

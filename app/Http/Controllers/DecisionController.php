@@ -2,20 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\PutusanDirectoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DecisionController extends Controller
 {
-    private array $kategoriMap = [
-        'perdata-17441'      => ['label' => 'Perdata', 'count' => 17441, 'ma_slug' => 'perdata'],
-        'pidana-umum-5237'   => ['label' => 'Pidana Umum', 'count' => 5237, 'ma_slug' => 'pidana-umum'],
-        'pidana-khusus-5065' => ['label' => 'Pidana Khusus', 'count' => 5065, 'ma_slug' => 'pidana-khusus'],
-        'perdata-agama-1665' => ['label' => 'Perdata Agama', 'count' => 1665, 'ma_slug' => 'perdata-agama'],
-        'perdata-khusus-12'  => ['label' => 'Perdata Khusus', 'count' => 12, 'ma_slug' => 'perdata-khusus'],
-        'tun-1'              => ['label' => 'TUN', 'count' => 1, 'ma_slug' => 'tun'],
-    ];
-
     public function index()
     {
         return view('decision.index');
@@ -46,7 +38,7 @@ class DecisionController extends Controller
     public function getCategories(Request $request)
     {
         $cats = [];
-        foreach ($this->kategoriMap as $slug => $info) {
+        foreach (PutusanDirectoryService::KATEGORI as $slug => $info) {
             $cats[] = ['slug' => $slug, 'label' => $info['label'], 'count' => $info['count']];
         }
         return response()->json(['categories' => $cats]);
@@ -65,7 +57,7 @@ class DecisionController extends Controller
         if (!$exists) {
             return response()->json(['error' => 'PN tidak valid'], 400);
         }
-        if ($kat !== '' && !isset($this->kategoriMap[$kat])) {
+        if ($kat !== '' && !isset(PutusanDirectoryService::KATEGORI[$kat])) {
             return response()->json(['error' => 'Klasifikasi tidak valid'], 400);
         }
         if ($thn !== '' && !preg_match('/^\d{4}$/', $thn)) {
@@ -75,7 +67,7 @@ class DecisionController extends Controller
         $base = 'https://putusan3.mahkamahagung.go.id/direktori/index/pengadilan/' . $pn;
         if ($kat !== '') {
             // MA direktori pakai format kategori/{slug}-1  contoh pidana-khusus-1
-            $maSlug = $this->kategoriMap[$kat]['ma_slug'] . '-1';
+            $maSlug = PutusanDirectoryService::KATEGORI[$kat]['ma_slug'] . '-1';
             $base .= '/kategori/' . $maSlug;
         }
         if ($thn !== '') {
@@ -87,7 +79,7 @@ class DecisionController extends Controller
 
         $pnRow = DB::table('master_pn')->whereRaw("LOWER(TRIM(pn_url)) LIKE ?", ['%'.strtolower($pn).'%'])->first();
         $info = 'PN: ' . trim($pnRow->pn_name);
-        if ($kat !== '') $info .= ' | ' . $this->kategoriMap[$kat]['label'] . ' (' . $this->kategoriMap[$kat]['count'] . ')';
+        if ($kat !== '') $info .= ' | ' . PutusanDirectoryService::KATEGORI[$kat]['label'] . ' (' . PutusanDirectoryService::KATEGORI[$kat]['count'] . ')';
         if ($thn !== '') $info .= ' | Tahun ' . $thn;
 
         return response()->json([
@@ -98,6 +90,38 @@ class DecisionController extends Controller
             'pn' => $pn,
             'kategori' => $kat,
             'tahun' => $thn,
+        ]);
+    }
+
+    public function import(Request $request)
+    {
+        $pn = strtolower(trim($request->input('pn') ?? ''));
+        $kategori = trim($request->input('kategori') ?? '');
+        $tahun = trim($request->input('tahun') ?? '');
+        $limit = min(60, max(5, (int) ($request->input('limit') ?? 15)));
+        $withPdf = (bool) $request->input('with_pdf', false);
+
+        if (!$pn || !preg_match('/^pn-[a-z0-9-]+$/', $pn)) {
+            return response()->json(['error' => 'PN tidak valid'], 422);
+        }
+        if ($kategori !== '' && !isset(PutusanDirectoryService::KATEGORI[$kategori])) {
+            return response()->json(['error' => 'Klasifikasi tidak valid'], 422);
+        }
+        if ($tahun !== '' && !preg_match('/^\d{4}$/', $tahun)) {
+            return response()->json(['error' => 'Tahun tidak valid'], 422);
+        }
+
+        $service = app(PutusanDirectoryService::class);
+        $summary = $service->import($pn, $kategori, $tahun, $limit, 3, 5, $withPdf);
+
+        $message = $summary['errors'] > 0 && $summary['attempted'] === 0
+            ? 'Tidak ada snapshot arsip untuk pengadilan ini (atau akses gagal).'
+            : 'Seluruh data disimpan sebagai DRAFT — publish via admin sebelum tampil publik.';
+
+        return response()->json([
+            'success' => $summary['errors'] === 0 || $summary['attempted'] > 0,
+            'message' => $message,
+            'summary' => $summary,
         ]);
     }
 }
